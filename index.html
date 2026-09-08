@@ -1,0 +1,2597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Content Studio — Game Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060a13;
+  --panel:#0a101d;
+  --card:#0d1526;
+  --card-hi:#121d33;
+  --input:#0a1120;
+  --line:rgba(96,140,255,.13);
+  --line-hi:rgba(139,92,246,.40);
+  --blue:#4f8cff;
+  --purple:#a855f7;
+  --cyan:#22d3ee;
+  --lime:#e5f542;
+  --lime-deep:#c8d926;
+  --on-lime:#181d03;
+  --text:#eef2fb;
+  --mut:#8b96b3;
+  --dim:#5d6784;
+  --draft:#fbbf24;
+  --pending:#c084fc;
+  --sched:#38bdf8;
+  --posted:#34d399;
+  --failed:#f87171;
+  --notposted:#64748b;
+  --r-lg:18px;
+  --r-md:14px;
+  --r-sm:10px;
+  --shadow-glow:0 0 0 1px rgba(96,140,255,.12), 0 10px 40px -12px rgba(30,64,175,.35);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{color-scheme:dark}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-size:14px;
+  line-height:1.5;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(900px 500px at 85% -10%, rgba(168,85,247,.10), transparent 60%),
+    radial-gradient(800px 500px at -10% 20%, rgba(79,140,255,.08), transparent 55%),
+    radial-gradient(700px 600px at 50% 115%, rgba(34,211,238,.05), transparent 60%);
+}
+h1,h2,h3,h4,.display{font-family:'Space Grotesk','Inter',sans-serif;letter-spacing:-.01em}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;color:var(--text)}
+::placeholder{color:var(--dim)}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:4px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#1c2740;border-radius:8px;border:2px solid var(--bg)}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- App shell ---------- */
+.app{display:flex;min-height:100vh;position:relative;z-index:1}
+.sidebar{
+  width:236px;flex-shrink:0;background:var(--panel);
+  border-right:1px solid var(--line);
+  display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;padding:22px 14px;
+}
+.logo{display:flex;align-items:center;gap:11px;padding:2px 8px 22px;user-select:none}
+.logo-mark{
+  width:40px;height:40px;border-radius:11px;flex-shrink:0;
+  background:linear-gradient(135deg,#182238,#0d1526);
+  border:1px solid rgba(96,140,255,.25);
+  display:grid;place-items:center;
+  font-family:'Space Grotesk';font-weight:700;font-size:20px;
+  color:#fff;
+  box-shadow:0 0 18px -4px rgba(79,140,255,.5), inset 0 0 12px rgba(79,140,255,.12);
+}
+.logo-name{font-family:'Space Grotesk';font-weight:700;font-size:15px;line-height:1.15;letter-spacing:.04em}
+.logo-name small{display:block;font-family:'Inter';font-weight:500;font-size:10.5px;letter-spacing:.08em;color:var(--mut)}
+.nav{display:flex;flex-direction:column;gap:3px}
+.nav-label{font-size:10.5px;font-weight:600;letter-spacing:.1em;color:var(--dim);padding:14px 12px 6px;text-transform:uppercase}
+.nav-item{
+  display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:var(--r-sm);
+  color:var(--mut);font-weight:500;font-size:13.5px;text-align:left;width:100%;
+  transition:background .15s,color .15s;position:relative;
+}
+.nav-item svg{width:18px;height:18px;flex-shrink:0}
+.nav-item:hover{background:rgba(96,140,255,.07);color:var(--text)}
+.nav-item.active{
+  background:linear-gradient(90deg,rgba(229,245,66,.14),rgba(229,245,66,.05));
+  color:var(--lime);font-weight:600;
+}
+.nav-item.active::before{
+  content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:3px;
+  background:var(--lime);box-shadow:0 0 10px rgba(229,245,66,.6);
+}
+.sidebar-foot{margin-top:auto;padding:16px 10px 4px;color:var(--dim);font-size:12px;line-height:1.6}
+.sidebar-foot b{color:var(--mut);font-weight:600}
+
+.main{flex:1;min-width:0;padding:26px 30px 60px;max-width:1560px}
+
+/* ---------- Page header ---------- */
+.page-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.page-head .spark{
+  width:46px;height:46px;border-radius:13px;flex-shrink:0;display:grid;place-items:center;font-size:22px;
+  background:linear-gradient(135deg,rgba(168,85,247,.22),rgba(79,140,255,.14));
+  border:1px solid var(--line-hi);
+  box-shadow:0 0 24px -6px rgba(168,85,247,.55);
+}
+.page-head h1{font-size:26px;font-weight:700}
+.page-head p{color:var(--mut);margin-top:3px;font-size:13.5px;max-width:640px}
+.page-head .head-actions{margin-left:auto;display:flex;gap:10px;align-items:center}
+
+/* ---------- Cards & panels ---------- */
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+  box-shadow:var(--shadow-glow);
+}
+.card-pad{padding:22px}
+.section-title{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.section-title .ico{
+  width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:16px;flex-shrink:0;
+  background:rgba(79,140,255,.12);border:1px solid rgba(79,140,255,.25);
+}
+.section-title h3{font-size:15.5px;font-weight:600}
+.section-title small{display:block;color:var(--mut);font-weight:400;font-size:12.5px;font-family:'Inter'}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border-radius:12px;font-weight:600;font-size:13.5px;padding:10px 18px;
+  transition:transform .12s,box-shadow .15s,background .15s,border-color .15s;
+  border:1px solid transparent;white-space:nowrap;
+}
+.btn:active{transform:translateY(1px)}
+.btn-primary{
+  background:linear-gradient(180deg,#eefa5a,var(--lime) 55%,var(--lime-deep));
+  color:var(--on-lime);font-weight:700;
+  box-shadow:0 4px 24px -6px rgba(229,245,66,.45), inset 0 1px 0 rgba(255,255,255,.5);
+}
+.btn-primary:hover{box-shadow:0 6px 30px -6px rgba(229,245,66,.65)}
+.btn-big{width:100%;padding:15px 20px;font-size:15px;border-radius:14px}
+.btn-ghost{background:var(--card-hi);border-color:var(--line);color:var(--text)}
+.btn-ghost:hover{border-color:rgba(96,140,255,.4);background:#16223c}
+.btn-outline{border-color:rgba(96,140,255,.35);color:var(--text);background:rgba(79,140,255,.06)}
+.btn-outline:hover{background:rgba(79,140,255,.14)}
+.btn-approve{
+  background:linear-gradient(180deg,#3ee6a4,#22c586);color:#052e1c;font-weight:700;
+  box-shadow:0 4px 22px -6px rgba(52,211,153,.5);
+}
+.btn-approve:hover{box-shadow:0 6px 28px -6px rgba(52,211,153,.7)}
+.btn-danger-ghost{border:1px solid rgba(248,113,113,.35);color:#fca5a5;background:rgba(248,113,113,.07)}
+.btn-sm{padding:7px 13px;font-size:12.5px;border-radius:10px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ---------- Chips / badges ---------- */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:600}
+.badge .dot{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+.b-draft{color:var(--draft);background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3)}
+.b-pending{color:var(--pending);background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.3)}
+.b-sched{color:var(--sched);background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.3)}
+.b-posted{color:var(--posted);background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3)}
+.b-failed{color:var(--failed);background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3)}
+.b-notposted{color:var(--notposted);background:rgba(100,116,139,.12);border:1px solid rgba(100,116,139,.35)}
+.b-rec{
+  color:var(--on-lime);background:var(--lime);font-weight:700;font-size:10.5px;letter-spacing:.03em;
+  box-shadow:0 0 14px -2px rgba(229,245,66,.6);
+}
+
+/* ---------- Steps ---------- */
+.step{display:flex;gap:13px;margin-bottom:22px}
+.step-num{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+  font-family:'Space Grotesk';font-weight:700;font-size:13px;
+  background:linear-gradient(135deg,rgba(79,140,255,.25),rgba(168,85,247,.25));
+  border:1px solid rgba(96,140,255,.4);color:#cfe0ff;
+  box-shadow:0 0 12px -2px rgba(79,140,255,.4);
+}
+.step-body{flex:1;min-width:0}
+.step-body>h4{font-size:14.5px;font-weight:600;margin-bottom:2px}
+.step-body>h4 .opt{color:var(--dim);font-weight:400;font-size:12px;font-family:'Inter'}
+.step-body>p{color:var(--mut);font-size:12.5px;margin-bottom:11px}
+
+/* ---------- Selectable option cards ---------- */
+.opt-grid{display:grid;gap:10px}
+.type-grid{grid-template-columns:repeat(3,1fr)}
+.opt-card{
+  background:var(--card-hi);border:1.5px solid var(--line);border-radius:var(--r-md);
+  padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;
+  transition:border-color .15s,box-shadow .15s,background .15s;position:relative;color:var(--text);
+}
+.opt-card:hover{border-color:rgba(96,140,255,.45)}
+.opt-card.selected{
+  border-color:var(--lime);background:linear-gradient(180deg,rgba(229,245,66,.08),rgba(229,245,66,.02));
+  box-shadow:0 0 20px -6px rgba(229,245,66,.4);
+}
+.opt-card .oc-ico{
+  width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:19px;
+  background:rgba(79,140,255,.12);border:1px solid rgba(96,140,255,.2);
+}
+.opt-card.selected .oc-ico{background:rgba(229,245,66,.12);border-color:rgba(229,245,66,.35)}
+.opt-card b{font-size:12.5px;font-weight:600;line-height:1.3}
+.opt-card small{color:var(--mut);font-size:11px;line-height:1.35}
+.opt-card .rec-tag{position:absolute;top:-9px;left:50%;transform:translateX(-50%)}
+
+/* purpose chips */
+.chip-row{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  padding:8px 13px;border-radius:11px;background:var(--card-hi);border:1.5px solid var(--line);
+  font-size:12.5px;font-weight:500;color:var(--text);display:inline-flex;align-items:center;gap:7px;
+  transition:border-color .15s,background .15s;
+}
+.chip:hover{border-color:rgba(96,140,255,.45)}
+.chip.selected{border-color:var(--lime);background:rgba(229,245,66,.09);color:var(--lime);font-weight:600}
+
+/* platform buttons */
+.plat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.plat{
+  display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:12px;
+  background:var(--card-hi);border:1.5px solid var(--line);font-size:12.5px;font-weight:500;color:var(--text);
+  transition:border-color .15s,background .15s;
+}
+.plat:hover{border-color:rgba(96,140,255,.45)}
+.plat.selected{border-color:var(--lime);background:rgba(229,245,66,.07)}
+.plat .p-ico{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:13px;font-weight:700;flex-shrink:0;color:#fff}
+
+/* ---------- Forms ---------- */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--mut);margin-bottom:6px}
+.input,select.input,textarea.input{
+  width:100%;background:var(--input);border:1.5px solid var(--line);border-radius:12px;
+  padding:11px 13px;font-size:13.5px;transition:border-color .15s;
+}
+.input:focus{border-color:rgba(96,140,255,.55);outline:none}
+textarea.input{resize:vertical;min-height:78px}
+select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b96b3' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:36px}
+.char-count{text-align:right;color:var(--dim);font-size:11px;margin-top:4px}
+
+/* toggle */
+.toggle-row{display:flex;align-items:flex-start;gap:11px;padding:11px 13px;border-radius:12px;background:var(--card-hi);border:1px solid var(--line);cursor:pointer;transition:border-color .15s}
+.toggle-row:hover{border-color:rgba(96,140,255,.4)}
+.toggle-row.on{border-color:rgba(229,245,66,.4)}
+.tg{width:38px;height:21px;border-radius:999px;background:#1c2740;position:relative;flex-shrink:0;transition:background .18s;margin-top:1px}
+.tg::after{content:"";position:absolute;top:2.5px;left:3px;width:16px;height:16px;border-radius:50%;background:#8b96b3;transition:transform .18s,background .18s}
+.toggle-row.on .tg{background:var(--lime);box-shadow:0 0 12px -2px rgba(229,245,66,.5)}
+.toggle-row.on .tg::after{transform:translateX(16px);background:var(--on-lime)}
+.toggle-row b{font-size:13px;font-weight:600;display:block}
+.toggle-row small{color:var(--mut);font-size:11.5px;line-height:1.4;display:block}
+
+/* radio-style asset mode */
+.mode-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.mode{
+  padding:12px 13px;border-radius:12px;background:var(--card-hi);border:1.5px solid var(--line);text-align:left;
+  transition:border-color .15s,background .15s;color:var(--text);
+}
+.mode.selected{border-color:var(--lime);background:rgba(229,245,66,.07)}
+.mode b{display:block;font-size:12.5px;margin-bottom:2px}
+.mode small{color:var(--mut);font-size:11px;line-height:1.35}
+
+/* asset thumbs */
+.asset-row{display:flex;gap:9px;flex-wrap:wrap}
+.asset{
+  width:64px;height:64px;border-radius:13px;border:2px solid var(--line);position:relative;
+  display:grid;place-items:center;font-size:24px;overflow:hidden;flex-shrink:0;
+  transition:border-color .15s,box-shadow .15s;background:var(--card-hi);padding:0;
+}
+.asset:hover{border-color:rgba(96,140,255,.5)}
+.asset.selected{border-color:var(--lime);box-shadow:0 0 14px -3px rgba(229,245,66,.55)}
+.asset.selected::after{
+  content:"✓";position:absolute;top:3px;right:3px;width:16px;height:16px;border-radius:50%;
+  background:var(--lime);color:var(--on-lime);font-size:10px;font-weight:800;display:grid;place-items:center;
+}
+.asset span.lbl{position:absolute;bottom:0;left:0;right:0;font-size:8.5px;font-weight:600;background:rgba(4,8,16,.72);color:#cfd8ec;padding:2px 0 3px;letter-spacing:.02em}
+.asset.upload-tile{border-style:dashed;border-color:#2a3a5e;color:var(--mut);font-size:12px;flex-direction:column;display:flex;align-items:center;justify-content:center;gap:2px}
+.asset.upload-tile:hover{border-color:var(--blue);color:var(--text)}
+.asset.upload-tile .plus{font-size:20px;line-height:1}
+
+.hint-line{display:flex;gap:8px;align-items:flex-start;color:var(--mut);font-size:11.5px;margin-top:10px;line-height:1.45}
+.hint-line .i{flex-shrink:0;width:15px;height:15px;border-radius:50%;border:1px solid var(--dim);display:grid;place-items:center;font-size:9px;color:var(--dim);margin-top:1px}
+
+/* ---------- Stat cards ---------- */
+.stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:13px;margin-bottom:22px}
+.stat{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);padding:16px 17px;
+  position:relative;overflow:hidden;
+}
+.stat::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--sc,var(--blue));opacity:.8;box-shadow:0 0 12px var(--sc,var(--blue))}
+.stat .s-num{font-family:'Space Grotesk';font-size:27px;font-weight:700;line-height:1.1}
+.stat .s-lbl{color:var(--mut);font-size:12px;font-weight:500;margin-top:3px}
+.stat .s-ico{position:absolute;top:13px;right:13px;font-size:16px;opacity:.85}
+
+/* ---------- Tabs ---------- */
+.tabs{display:flex;gap:4px;background:var(--input);border:1px solid var(--line);border-radius:13px;padding:4px;width:max-content;max-width:100%;overflow-x:auto}
+.tab{
+  padding:8px 16px;border-radius:9px;font-size:12.5px;font-weight:600;color:var(--mut);
+  display:inline-flex;align-items:center;gap:7px;transition:background .15s,color .15s;white-space:nowrap;
+}
+.tab:hover{color:var(--text)}
+.tab.active{background:linear-gradient(135deg,rgba(79,140,255,.25),rgba(168,85,247,.22));color:#fff;box-shadow:inset 0 0 0 1px rgba(96,140,255,.35)}
+
+/* ---------- Modal ---------- */
+.overlay{
+  position:fixed;inset:0;background:rgba(3,6,12,.78);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;z-index:100;padding:24px;
+}
+.overlay.open{display:flex;animation:fadeIn .18s ease}
+.modal{
+  background:var(--card);border:1px solid var(--line-hi);border-radius:20px;
+  width:100%;max-width:520px;max-height:88vh;overflow-y:auto;padding:26px;
+  box-shadow:0 0 60px -10px rgba(168,85,247,.35), 0 24px 80px rgba(0,0,0,.6);
+  animation:popIn .22s cubic-bezier(.2,.9,.3,1.2);
+}
+.modal h3{font-size:18px;margin-bottom:4px}
+.modal .m-sub{color:var(--mut);font-size:13px;margin-bottom:18px}
+.modal-close{position:sticky;float:right;top:0;color:var(--mut);font-size:18px;padding:2px 8px;border-radius:8px}
+.modal-close:hover{color:#fff;background:rgba(255,255,255,.06)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes popIn{from{opacity:0;transform:scale(.94) translateY(8px)}to{opacity:1;transform:none}}
+
+/* checkbox */
+.ckrow{display:flex;align-items:center;gap:10px;padding:8px 2px;cursor:pointer;font-size:13.5px}
+.ck{width:19px;height:19px;border-radius:6px;border:1.5px solid #2a3a5e;background:var(--input);display:grid;place-items:center;flex-shrink:0;transition:all .12s;font-size:11px;font-weight:800;color:transparent}
+.ckrow.on .ck{background:var(--lime);border-color:var(--lime);color:var(--on-lime)}
+
+/* ---------- Toast ---------- */
+#toast-wrap{position:fixed;bottom:26px;right:26px;z-index:200;display:flex;flex-direction:column;gap:10px}
+.toast{
+  background:var(--card-hi);border:1px solid rgba(52,211,153,.4);border-left:3px solid var(--posted);
+  padding:12px 18px;border-radius:12px;font-size:13px;font-weight:500;display:flex;gap:10px;align-items:center;
+  box-shadow:0 10px 40px rgba(0,0,0,.5);animation:toastIn .25s cubic-bezier(.2,.9,.3,1.2);max-width:360px;
+}
+.toast.warn{border-color:rgba(251,191,36,.4);border-left-color:var(--draft)}
+@keyframes toastIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+
+/* ---------- Pages ---------- */
+.page{display:none}
+.page.active{display:block;animation:pageIn .25s ease}
+@keyframes pageIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- Generate layout ---------- */
+.gen-layout{display:grid;grid-template-columns:minmax(390px,440px) 1fr;gap:20px;align-items:start}
+.preview-panel{position:sticky;top:26px}
+
+/* poster */
+.poster{
+  aspect-ratio:4/5;border-radius:16px;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  border:1px solid rgba(96,140,255,.25);
+}
+.poster .p-logo{position:absolute;top:14px;left:14px;display:flex;align-items:center;gap:7px;font-family:'Space Grotesk';font-weight:700;font-size:11px;letter-spacing:.05em;color:#fff;opacity:.95}
+.poster .p-logo .lm{width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);display:grid;place-items:center;font-size:12px}
+.poster .p-char{font-size:88px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.45));animation:floaty 4s ease-in-out infinite}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.poster .p-head{
+  font-family:'Space Grotesk';font-weight:700;font-size:34px;line-height:1.02;text-align:center;
+  text-transform:uppercase;letter-spacing:.01em;padding:0 18px;
+  background:linear-gradient(180deg,#fff8d0,#ffd83d 55%,#ff9f1c);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 3px 0 rgba(120,50,0,.55)) drop-shadow(0 8px 22px rgba(0,0,0,.4));
+}
+.poster .p-tag{
+  background:rgba(4,8,16,.55);border:1px solid rgba(255,255,255,.25);color:#fff;
+  font-size:10.5px;font-weight:700;letter-spacing:.14em;padding:5px 13px;border-radius:999px;text-transform:uppercase;
+}
+.poster .p-cta{
+  margin-top:4px;background:linear-gradient(180deg,#eefa5a,#c8d926);color:var(--on-lime);
+  font-family:'Space Grotesk';font-weight:700;font-size:14px;letter-spacing:.06em;padding:9px 26px;border-radius:11px;
+  box-shadow:0 6px 20px -4px rgba(229,245,66,.55);
+}
+.poster .p-orn{position:absolute;font-size:26px;opacity:.9;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
+.poster .p-shine{position:absolute;inset:0;background:radial-gradient(420px 260px at 50% 12%,rgba(255,255,255,.16),transparent 60%)}
+
+/* video frame */
+.vid-frame{aspect-ratio:16/9;border-radius:16px;position:relative;overflow:hidden;border:1px solid rgba(96,140,255,.25);display:flex;align-items:center;justify-content:center}
+.vid-frame .vf-bg{position:absolute;inset:0}
+.vid-frame .play{
+  width:64px;height:64px;border-radius:50%;background:rgba(6,10,19,.55);border:2px solid rgba(255,255,255,.7);
+  display:grid;place-items:center;color:#fff;font-size:22px;padding-left:5px;z-index:2;backdrop-filter:blur(4px);
+  transition:transform .15s,box-shadow .15s;
+}
+.vid-frame .play:hover{transform:scale(1.08);box-shadow:0 0 30px rgba(255,255,255,.3)}
+.vid-bar{display:flex;align-items:center;gap:11px;margin-top:12px}
+.vid-track{flex:1;height:5px;border-radius:99px;background:#1c2740;position:relative;overflow:hidden}
+.vid-track .fill{position:absolute;left:0;top:0;bottom:0;width:30%;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--purple));box-shadow:0 0 10px rgba(79,140,255,.6)}
+.vid-time{font-size:11.5px;color:var(--mut);font-variant-numeric:tabular-nums}
+
+/* result meta panels */
+.result-box{background:var(--card-hi);border:1px solid var(--line);border-radius:var(--r-md);padding:16px 18px;margin-bottom:12px}
+.result-box .rb-head{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.result-box .rb-head .ico{width:28px;height:28px;border-radius:8px;background:rgba(79,140,255,.13);border:1px solid rgba(96,140,255,.25);display:grid;place-items:center;font-size:13px}
+.result-box .rb-head b{font-size:13px}
+.result-box .rb-head .rb-actions{margin-left:auto;display:flex;gap:5px}
+.icon-btn{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--mut);border:1px solid transparent;font-size:13px}
+.icon-btn:hover{color:#fff;background:rgba(96,140,255,.12);border-color:var(--line)}
+.caption-text{font-size:13.5px;line-height:1.65;color:#dbe3f5;white-space:pre-line}
+.tag-cloud{display:flex;flex-wrap:wrap;gap:7px}
+.htag{color:#79a6ff;background:rgba(79,140,255,.1);border:1px solid rgba(79,140,255,.25);padding:4px 11px;border-radius:999px;font-size:12px;font-weight:600}
+
+/* compliance */
+.comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;margin:12px 0}
+.comp-item{display:flex;align-items:center;gap:9px;font-size:12.5px;color:#c6d0e6;padding:4px 0}
+.comp-item .cchk{width:17px;height:17px;border-radius:50%;background:rgba(52,211,153,.15);border:1px solid rgba(52,211,153,.5);color:var(--posted);display:grid;place-items:center;font-size:9.5px;font-weight:800;flex-shrink:0}
+.comp-item.fail .cchk{background:rgba(251,191,36,.15);border-color:rgba(251,191,36,.5);color:var(--draft)}
+.ready-banner{
+  display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:13px;
+  background:linear-gradient(90deg,rgba(52,211,153,.14),rgba(52,211,153,.04));
+  border:1px solid rgba(52,211,153,.4);flex-wrap:wrap;
+}
+.ready-banner .rb-ic{width:34px;height:34px;border-radius:10px;background:rgba(52,211,153,.2);display:grid;place-items:center;font-size:16px}
+.ready-banner b{color:var(--posted);font-size:14px;letter-spacing:.03em}
+.ready-banner small{color:var(--mut);display:block;font-size:12px}
+.ready-banner.warn{background:linear-gradient(90deg,rgba(251,191,36,.13),rgba(251,191,36,.03));border-color:rgba(251,191,36,.45)}
+.ready-banner.warn b{color:var(--draft)}
+.ready-banner.warn .rb-ic{background:rgba(251,191,36,.18)}
+.comp-fail{
+  grid-column:1/-1;background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.32);
+  border-radius:12px;padding:12px 14px;margin:3px 0;
+}
+.comp-fail .cf-name{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:#fde68a;margin-bottom:6px}
+.comp-fail .cf-name .cchk{width:17px;height:17px;border-radius:50%;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.5);color:var(--draft);display:grid;place-items:center;font-size:10px;font-weight:800;flex-shrink:0}
+.comp-fail .cf-row{font-size:12px;color:#c6d0e6;line-height:1.5;margin-bottom:2px}
+.comp-fail .cf-row b{color:var(--mut);font-weight:600}
+.comp-fail .btn{margin-top:8px}
+.plat-spec{font-size:11.5px;color:var(--mut);background:var(--card-hi);border:1px solid var(--line);border-radius:9px;padding:6px 11px;display:inline-flex;gap:7px;align-items:center;margin:3px 4px 0 0}
+.plat-spec b{color:#c6d0e6;font-weight:600}
+
+/* ---------- Generation progress overlay ---------- */
+#gen-overlay{
+  position:fixed;inset:0;z-index:150;background:rgba(4,7,14,.93);backdrop-filter:blur(10px);
+  display:none;align-items:center;justify-content:center;
+}
+#gen-overlay.open{display:flex}
+.gen-stage{width:min(480px,92vw);text-align:center}
+.orb-wrap{position:relative;width:130px;height:130px;margin:0 auto 26px}
+.orb{
+  position:absolute;inset:22px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#c2d6ff,#4f8cff 45%,#7a3bf0 80%);
+  box-shadow:0 0 60px 8px rgba(122,59,240,.55),0 0 120px 30px rgba(79,140,255,.25);
+  animation:orbPulse 2.2s ease-in-out infinite;
+}
+.orb-ring{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(96,140,255,.35);border-top-color:var(--lime);animation:spin 1.6s linear infinite}
+.orb-ring.r2{inset:9px;border-color:rgba(168,85,247,.3);border-top-color:transparent;border-bottom-color:var(--purple);animation-duration:2.4s;animation-direction:reverse}
+@keyframes orbPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.gen-stage h2{font-size:22px;margin-bottom:5px}
+.gen-stage .g-sub{color:var(--mut);font-size:13px;margin-bottom:24px}
+.gen-steps{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+.gstep{display:flex;align-items:center;gap:11px;padding:6px 0;font-size:13px;color:var(--dim);transition:color .3s}
+.gstep .gs-ic{width:20px;height:20px;border-radius:50%;border:1.5px solid #263352;display:grid;place-items:center;font-size:10px;flex-shrink:0;transition:all .3s}
+.gstep.doing{color:#fff}
+.gstep.doing .gs-ic{border-color:var(--blue);box-shadow:0 0 10px rgba(79,140,255,.5)}
+.gstep.doing .gs-ic::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--blue);animation:orbPulse 1s infinite}
+.gstep.done{color:#a9b6d4}
+.gstep.done .gs-ic{background:rgba(52,211,153,.15);border-color:rgba(52,211,153,.6);color:var(--posted)}
+.gstep.done .gs-ic::after{content:"✓";font-weight:800}
+.gen-progress{height:5px;border-radius:99px;background:#1c2740;margin-top:20px;overflow:hidden}
+.gen-progress .gp-fill{height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--purple),var(--lime));transition:width .4s ease;box-shadow:0 0 12px rgba(168,85,247,.6)}
+
+/* ---------- Calendar ---------- */
+.cal-head-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.cal-title{font-family:'Space Grotesk';font-size:19px;font-weight:700;min-width:190px}
+.cal-nav-btn{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--card-hi);color:var(--mut);display:grid;place-items:center;font-size:14px}
+.cal-nav-btn:hover{color:#fff;border-color:rgba(96,140,255,.4)}
+.view-switch{display:flex;background:var(--input);border:1px solid var(--line);border-radius:11px;padding:3px;margin-left:auto}
+.view-switch button{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;color:var(--mut)}
+.view-switch button.active{background:var(--card-hi);color:#fff;box-shadow:inset 0 0 0 1px rgba(96,140,255,.3)}
+.filter-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.filter-row select{width:auto;min-width:150px;padding:8px 34px 8px 12px;font-size:12.5px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;background:var(--line);gap:1px}
+.cal-dow{background:var(--card-hi);padding:9px 10px;font-size:11px;font-weight:700;letter-spacing:.07em;color:var(--mut);text-transform:uppercase}
+.cal-cell{background:var(--card);min-height:112px;padding:7px 7px 9px;position:relative;transition:background .15s}
+.cal-cell:hover{background:var(--card-hi)}
+.cal-cell.other{background:#0a0f1c;opacity:.5}
+.cal-cell .cd{font-size:11.5px;font-weight:600;color:var(--mut);margin-bottom:5px;font-variant-numeric:tabular-nums}
+.cal-cell.today .cd{
+  display:inline-grid;place-items:center;width:21px;height:21px;border-radius:50%;
+  background:var(--lime);color:var(--on-lime);font-weight:800;box-shadow:0 0 12px rgba(229,245,66,.5);
+}
+.cal-ev{
+  display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:8px;margin-bottom:4px;
+  font-size:10.5px;font-weight:600;cursor:pointer;border:1px solid transparent;line-height:1.25;
+  transition:transform .12s,box-shadow .12s;width:100%;text-align:left;color:var(--text);
+}
+.cal-ev:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.cal-ev .ev-th{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:11px;flex-shrink:0}
+.cal-ev .ev-tx{overflow:hidden}
+.cal-ev .ev-tx b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10.5px}
+.cal-ev .ev-tx small{color:inherit;opacity:.75;font-size:9px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-draft{background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.35);color:#fde68a}
+.ev-pending{background:rgba(192,132,252,.12);border-color:rgba(192,132,252,.35);color:#e9d5ff}
+.ev-sched{background:rgba(56,189,248,.12);border-color:rgba(56,189,248,.35);color:#bae6fd}
+.ev-posted{background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.35);color:#a7f3d0}
+.ev-failed{background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.4);color:#fecaca}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;font-size:11.5px;color:var(--mut)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+.prog-wrap{margin-top:6px}
+.prog-track{height:8px;border-radius:99px;background:#1c2740;overflow:hidden}
+.prog-track .fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--sched),var(--posted));box-shadow:0 0 12px rgba(52,211,153,.5);transition:width .4s}
+
+/* ---------- Library ---------- */
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:15px}
+.lib-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;transition:border-color .15s,transform .15s,box-shadow .2s}
+.lib-card:hover{border-color:rgba(96,140,255,.4);transform:translateY(-2px);box-shadow:0 14px 40px -10px rgba(0,0,0,.55)}
+.lib-thumb{aspect-ratio:16/10;position:relative;display:flex;align-items:center;justify-content:center;font-size:42px}
+.lib-thumb .lt-type{position:absolute;top:9px;left:9px;background:rgba(4,8,16,.65);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:.05em;backdrop-filter:blur(3px)}
+.lib-thumb .lt-status{position:absolute;top:9px;right:9px}
+.lib-body{padding:13px 14px 14px}
+.lib-body b{font-size:13.5px;display:block;margin-bottom:2px}
+.lib-body .lb-meta{color:var(--mut);font-size:11.5px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.lib-actions{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap}
+
+/* ---------- Brand assets ---------- */
+.ba-section{margin-bottom:26px}
+.ba-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+.ba-tile{background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);padding:16px 10px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;transition:border-color .15s}
+.ba-tile:hover{border-color:rgba(96,140,255,.4)}
+.ba-tile .ba-vis{width:56px;height:56px;border-radius:13px;display:grid;place-items:center;font-size:26px}
+.ba-tile b{font-size:11.5px;font-weight:600;text-align:center;line-height:1.3}
+.ba-tile small{color:var(--dim);font-size:10px}
+
+/* ---------- Analytics ---------- */
+.an-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-top:4px}
+.bar-row{display:flex;align-items:center;gap:11px;margin-bottom:11px}
+.bar-row .br-lbl{width:86px;font-size:12px;color:var(--mut);font-weight:500;flex-shrink:0}
+.bar-row .br-track{flex:1;height:22px;border-radius:7px;background:#101a2e;overflow:hidden;position:relative}
+.bar-row .br-fill{height:100%;border-radius:7px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:10.5px;font-weight:700;color:rgba(255,255,255,.9);min-width:30px}
+.spark-cols{display:flex;align-items:flex-end;gap:7px;height:120px;padding-top:8px}
+.spark-cols .sc{flex:1;border-radius:6px 6px 3px 3px;background:linear-gradient(180deg,var(--purple),var(--blue));opacity:.85;position:relative;min-height:8px;transition:opacity .15s}
+.spark-cols .sc:hover{opacity:1}
+.spark-cols .sc.hi{background:linear-gradient(180deg,var(--lime),#9db520);box-shadow:0 0 16px -3px rgba(229,245,66,.5)}
+.spark-lbls{display:flex;gap:7px;margin-top:7px}
+.spark-lbls span{flex:1;text-align:center;font-size:10px;color:var(--dim)}
+
+/* ---------- Settings ---------- */
+.set-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.rule-list{display:flex;flex-direction:column;gap:8px}
+.rule-item{display:flex;align-items:center;gap:10px;background:var(--card-hi);border:1px solid var(--line);border-radius:11px;padding:10px 13px;font-size:12.5px}
+.rule-item .r-ic{font-size:14px}
+.rule-item small{color:var(--mut);display:block;font-size:11px}
+.rule-item .r-x{margin-left:auto;color:var(--dim);font-size:14px;padding:2px 7px;border-radius:6px}
+.rule-item .r-x:hover{color:var(--failed);background:rgba(248,113,113,.1)}
+
+/* ---------- Templates ---------- */
+.tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:15px}
+.tpl-card{border-radius:var(--r-md);overflow:hidden;border:1px solid var(--line);background:var(--card);transition:border-color .15s,transform .15s}
+.tpl-card:hover{border-color:rgba(96,140,255,.45);transform:translateY(-2px)}
+.tpl-vis{aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;position:relative}
+.tpl-vis .tv-t{font-family:'Space Grotesk';font-weight:700;font-size:17px;color:#fff;text-transform:uppercase;letter-spacing:.02em;text-shadow:0 2px 12px rgba(0,0,0,.5)}
+.tpl-vis .tv-e{font-size:34px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.4))}
+.tpl-body{padding:12px 14px;display:flex;align-items:center;gap:8px}
+.tpl-body b{font-size:12.5px}
+.tpl-body small{color:var(--mut);font-size:11px;display:block}
+.tpl-body .btn{margin-left:auto}
+
+/* dashboard extras */
+.dash-cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+.quick-gen{
+  border-radius:var(--r-lg);padding:26px;position:relative;overflow:hidden;
+  background:linear-gradient(120deg,rgba(79,140,255,.16),rgba(168,85,247,.18) 55%,rgba(34,211,238,.1));
+  border:1px solid var(--line-hi);margin-bottom:22px;
+  display:flex;align-items:center;gap:22px;flex-wrap:wrap;
+}
+.quick-gen::before{content:"";position:absolute;inset:0;background:radial-gradient(500px 200px at 20% 0%,rgba(255,255,255,.07),transparent 60%);pointer-events:none}
+.quick-gen h2{font-size:21px;margin-bottom:5px}
+.quick-gen p{color:#b9c4dd;font-size:13px;max-width:520px}
+.quick-gen .qg-btn{margin-left:auto}
+.recent-item{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid rgba(96,140,255,.08)}
+.recent-item:last-child{border-bottom:none}
+.recent-item .ri-th{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:19px;flex-shrink:0}
+.recent-item b{font-size:13px;display:block}
+.recent-item small{color:var(--mut);font-size:11.5px}
+.recent-item .badge{margin-left:auto}
+
+.pipe-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--dim);font-size:11.5px;font-weight:600;margin-top:16px}
+.pipe-row .pr-step{background:var(--card-hi);border:1px solid var(--line);border-radius:999px;padding:5px 13px;color:var(--mut)}
+.pipe-row .pr-arrow{color:#2a3a5e}
+
+@media (max-width:1120px){
+  .gen-layout{grid-template-columns:1fr}
+  .preview-panel{position:static}
+  .stat-grid{grid-template-columns:repeat(3,1fr)}
+  .dash-cols,.an-grid,.set-grid{grid-template-columns:1fr}
+}
+@media (max-width:800px){
+  .sidebar{position:fixed;left:-240px;z-index:90;transition:left .2s}
+  .sidebar.open{left:0}
+  .main{padding:18px 16px 60px}
+  .type-grid,.plat-grid{grid-template-columns:repeat(2,1fr)}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .comp-grid{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001s !important;transition-duration:.001s !important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">G</div>
+    <div class="logo-name">GAME<br>ENGINE<small>AI Content Studio</small></div>
+  </div>
+  <button class="btn btn-ghost btn-sm" id="lang-toggle" style="margin:0 6px 12px;justify-content:center" onclick="setLang(state.lang==='zh'?'en':'zh')" title="Switch language / 切换语言">🌐 中文</button>
+  <nav class="nav">
+    <button class="nav-item" data-page="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Home
+    </button>
+    <button class="nav-item active" data-page="generate">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg>
+      Generate Content
+    </button>
+    <button class="nav-item" data-page="calendar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Content Calendar
+    </button>
+    <button class="nav-item" data-page="library">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      Content Library
+    </button>
+    <button class="nav-item" data-page="assets">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      Brand Assets
+    </button>
+    <button class="nav-item" data-page="templates">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+      Templates
+    </button>
+    <button class="nav-item" data-page="analytics">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Analytics
+    </button>
+    <button class="nav-item" data-page="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </button>
+  </nav>
+  <div class="sidebar-foot"><b>Create. Share. Grow.</b><br>— Faster.</div>
+</aside>
+
+<main class="main">
+
+<!-- ============ DASHBOARD ============ -->
+<section class="page" id="page-dashboard">
+  <div class="page-head">
+    <div class="spark">✨</div>
+    <div>
+      <h1>AI Content Studio</h1>
+      <p>Create ready-to-post content with one click. AI generates your visual, video, caption, hashtags, and CTA automatically.</p>
+    </div>
+  </div>
+
+  <div class="quick-gen">
+    <div>
+      <h2>Generate new content</h2>
+      <p>Pick a game, choose what to create, and let AI handle the concept, visuals, copy, and compliance — end to end.</p>
+      <div class="pipe-row">
+        <span class="pr-step">Select</span><span class="pr-arrow">→</span>
+        <span class="pr-step">Generate</span><span class="pr-arrow">→</span>
+        <span class="pr-step">Review</span><span class="pr-arrow">→</span>
+        <span class="pr-step">Approve</span><span class="pr-arrow">→</span>
+        <span class="pr-step">Schedule</span><span class="pr-arrow">→</span>
+        <span class="pr-step">Post</span><span class="pr-arrow">→</span>
+        <span class="pr-step">Track</span>
+      </div>
+    </div>
+    <button class="btn btn-primary qg-btn" style="padding:14px 26px;font-size:14.5px" onclick="go('generate')">✨ Generate New Content</button>
+  </div>
+
+  <div class="stat-grid" id="dash-stats"></div>
+
+  <div class="dash-cols">
+    <div class="card card-pad">
+      <div class="section-title">
+        <div class="ico">🕘</div>
+        <h3>Recent content<small>Latest packages generated by the studio</small></h3>
+      </div>
+      <div id="dash-recent"></div>
+    </div>
+    <div class="card card-pad">
+      <div class="section-title">
+        <div class="ico">📅</div>
+        <h3>Coming up<small>Next scheduled posts</small></h3>
+      </div>
+      <div id="dash-upcoming"></div>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:14px" onclick="go('calendar')">Open content calendar</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GENERATE CONTENT ============ -->
+<section class="page active" id="page-generate">
+  <div class="page-head">
+    <div class="spark">✨</div>
+    <div>
+      <h1>Generate Content</h1>
+      <p>Turn your ideas into ready-to-post content. Choose a game, pick what you need, and click Generate — AI does the rest.</p>
+    </div>
+  </div>
+
+  <div class="gen-layout">
+    <!-- LEFT: setup form -->
+    <div class="card card-pad">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>What do you want to create?</h4>
+          <p>Choose the type of content you need.</p>
+          <div class="opt-grid type-grid">
+            <button class="opt-card" data-type="photo">
+              <div class="oc-ico">🖼</div>
+              <b>Photo</b>
+              <small>Social media poster or image</small>
+            </button>
+            <button class="opt-card" data-type="video">
+              <div class="oc-ico">🎬</div>
+              <b>Video</b>
+              <small>Short video or reel</small>
+            </button>
+            <button class="opt-card selected" data-type="package">
+              <span class="rec-tag badge b-rec">RECOMMENDED</span>
+              <div class="oc-ico">📦</div>
+              <b>Full Package</b>
+              <small>Photo + video + caption + hashtags + CTA</small>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Select game or subject</h4>
+          <p>Approved logos, characters, assets, and brand rules load automatically.</p>
+          <select class="input" id="game-select" onchange="onGameChange()">
+            <optgroup label="Games">
+              <option value="banana">🍌 Banana Craze</option>
+              <option value="blazing">🔥 Blazing 7s</option>
+              <option value="ginto">🪙 Ginto Match</option>
+              <option value="lucky">🍀 Lucky Color</option>
+              <option value="ocean">🌊 Fortune Ocean</option>
+              <option value="bingo">🎱 Bingo Flux</option>
+            </optgroup>
+            <optgroup label="Company">
+              <option value="company">🏢 Company &amp; Events (Game Engine)</option>
+            </optgroup>
+          </select>
+          <div class="hint-line"><span class="i">i</span><span id="game-loaded-hint">Loaded for Banana Craze: logo, 3 characters, 4 backgrounds, game symbols, brand rules, and content restrictions.</span></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Content purpose</h4>
+          <p>What is this content for?</p>
+          <div class="chip-row" id="purpose-row">
+            <button class="chip" data-scope="game" data-purpose="Game Feature">🎮 Game Feature</button>
+            <button class="chip selected" data-scope="game" data-purpose="New Game Announcement">🚀 New Game Announcement</button>
+            <button class="chip" data-scope="game" data-purpose="Announcement">📢 Announcement</button>
+            <button class="chip" data-scope="game" data-purpose="Game Tutorial">🎯 Game Tutorial</button>
+            <button class="chip" data-scope="game" data-purpose="Feature Highlight">⭐ Feature Highlight</button>
+            <button class="chip" data-scope="game" data-purpose="Social Media Engagement">📱 Engagement</button>
+            <button class="chip" data-scope="game" data-purpose="Seasonal Content">🎉 Seasonal</button>
+            <button class="chip" data-scope="company" data-purpose="Company Event" style="display:none">🎪 Company Event</button>
+            <button class="chip" data-scope="company" data-purpose="Company News" style="display:none">📣 Company News</button>
+            <button class="chip" data-scope="company" data-purpose="We're Hiring" style="display:none">👥 We're Hiring</button>
+            <button class="chip" data-scope="company" data-purpose="Partnership" style="display:none">🤝 Partnership</button>
+            <button class="chip" data-scope="company" data-purpose="Milestone" style="display:none">🏆 Milestone</button>
+            <button class="chip" data-scope="both" data-purpose="Custom">✨ Custom</button>
+          </div>
+          <div class="field" id="custom-brief-wrap" style="display:none;margin-top:11px">
+            <textarea class="input" id="custom-brief" maxlength="200" placeholder="E.g. Create a fun and exciting post for our new game release, with a playful and energetic vibe." oninput="document.getElementById('brief-count').textContent=this.value.length+'/200'"></textarea>
+            <div class="char-count" id="brief-count">0/200</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>Platforms <span class="opt">(select one or more)</span></h4>
+          <p>Content is optimized for every platform you pick.</p>
+          <div class="plat-grid" id="plat-grid">
+            <button class="plat selected" data-plat="Facebook"><span class="p-ico" style="background:#1877f2">f</span>Facebook</button>
+            <button class="plat selected" data-plat="Instagram"><span class="p-ico" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)">📷</span>Instagram</button>
+            <button class="plat" data-plat="TikTok"><span class="p-ico" style="background:#010101;border:1px solid #333">♪</span>TikTok</button>
+            <button class="plat" data-plat="X"><span class="p-ico" style="background:#14171a;border:1px solid #333">𝕏</span>X (Twitter)</button>
+            <button class="plat" data-plat="YouTube"><span class="p-ico" style="background:#ff0000">▶</span>YouTube</button>
+            <button class="plat" data-plat="LinkedIn"><span class="p-ico" style="background:#0a66c2">in</span>LinkedIn</button>
+          </div>
+          <div style="margin-top:11px">
+            <div class="toggle-row on" id="auto-opt" onclick="this.classList.toggle('on')" role="switch" aria-checked="true" tabindex="0">
+              <div class="tg"></div>
+              <div>
+                <b>Auto Optimize</b>
+                <small>Automatically adjusts image dimensions, video aspect ratio &amp; duration, caption length &amp; tone, hashtags, and CTA for each selected platform.</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step" style="margin-bottom:14px">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h4>Asset control</h4>
+          <p>Decide which visuals AI is allowed to use.</p>
+          <div class="mode-row">
+            <button class="mode" data-mode="ai">
+              <b>✨ AI Generated Assets</b>
+              <small>AI may create additional visual elements to enrich the design.</small>
+            </button>
+            <button class="mode selected" data-mode="mine">
+              <b>🖼 Use My Assets Only</b>
+              <small>AI must only use the approved assets selected below.</small>
+            </button>
+          </div>
+          <div style="margin-top:12px" id="asset-lib-wrap">
+            <div class="asset-row" id="asset-row"></div>
+            <div class="hint-line"><span class="i">i</span>Only the selected assets will be used in your generated content. Brand rules and required disclaimers are applied automatically.</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-big" id="btn-generate" onclick="startGeneration()">✨ Generate Content</button>
+    </div>
+
+    <!-- RIGHT: preview / results -->
+    <div class="preview-panel">
+      <!-- Empty state -->
+      <div class="card card-pad" id="result-empty" style="text-align:center;padding:60px 30px">
+        <div style="font-size:44px;margin-bottom:12px;filter:drop-shadow(0 0 18px rgba(168,85,247,.5))">✨</div>
+        <h3 style="font-size:17px;margin-bottom:6px">Your content package will appear here</h3>
+        <p style="color:var(--mut);font-size:13px;max-width:340px;margin:0 auto">One click generates your poster, video, caption, hashtags, and CTA — checked against brand rules before you ever see it.</p>
+      </div>
+
+      <!-- Results -->
+      <div id="result-wrap" style="display:none">
+        <div class="card card-pad" style="margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+            <div class="section-title" style="margin-bottom:0">
+              <div class="ico">✨</div>
+              <h3>Generated Content<small id="result-meta">Banana Craze · New Game Announcement</small></h3>
+            </div>
+            <div style="margin-left:auto;display:flex;gap:8px">
+              <button class="btn btn-ghost btn-sm" onclick="saveToLibrary()">💾 Save</button>
+              <button class="btn btn-ghost btn-sm" onclick="toast('Package downloaded as ZIP (demo)')">⬇ Download all</button>
+            </div>
+          </div>
+
+          <div class="tabs" id="result-tabs" style="margin-bottom:16px">
+            <button class="tab active" data-tab="photo">🖼 Photo</button>
+            <button class="tab" data-tab="video">🎬 Video</button>
+            <button class="tab" data-tab="caption">📝 Caption</button>
+            <button class="tab" data-tab="hashtags"># Hashtags</button>
+            <button class="tab" data-tab="cta">🔗 CTA</button>
+          </div>
+
+          <!-- PHOTO TAB -->
+          <div class="rtab" id="rtab-photo">
+            <div class="poster" id="poster"></div>
+            <div style="display:flex;gap:7px;margin-top:13px;flex-wrap:wrap">
+              <button class="btn btn-ghost btn-sm" onclick="toast('Poster downloaded (demo)')">⬇ Download</button>
+              <button class="btn btn-ghost btn-sm" onclick="toast('Opening editor (demo)')">✏️ Edit</button>
+              <button class="btn btn-outline btn-sm" onclick="regenComponent('photo')">🔄 Regenerate</button>
+              <button class="btn btn-ghost btn-sm" onclick="focusRevise('photo')">💬 Revise</button>
+            </div>
+          </div>
+
+          <!-- VIDEO TAB -->
+          <div class="rtab" id="rtab-video" style="display:none">
+            <div class="vid-frame" id="vid-frame">
+              <div class="vf-bg" id="vf-bg"></div>
+              <div style="position:absolute;top:12px;left:14px;z-index:2;font-family:'Space Grotesk';font-weight:700;font-size:12px;color:#fff;background:rgba(4,8,16,.5);padding:4px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.2)" id="vid-label">Banana Craze — 15s reel</div>
+              <button class="play" id="btn-play" onclick="togglePlay()" aria-label="Play video">▶</button>
+            </div>
+            <div class="vid-bar">
+              <span class="vid-time" id="vid-cur">0:00</span>
+              <div class="vid-track"><div class="fill" id="vid-fill" style="width:0%"></div></div>
+              <span class="vid-time" id="vid-dur">0:15</span>
+            </div>
+            <div style="display:flex;gap:7px;margin-top:11px;flex-wrap:wrap">
+              <button class="btn btn-ghost btn-sm" onclick="toast('Video downloaded (demo)')">⬇ Download</button>
+              <button class="btn btn-ghost btn-sm" onclick="toast('Opening editor (demo)')">✏️ Edit</button>
+              <button class="btn btn-outline btn-sm" onclick="regenComponent('video')">🔄 Regenerate</button>
+              <button class="btn btn-ghost btn-sm" onclick="focusRevise('video')">💬 Revise</button>
+            </div>
+          </div>
+
+          <!-- CAPTION TAB -->
+          <div class="rtab" id="rtab-caption" style="display:none">
+            <div class="result-box">
+              <div class="rb-head">
+                <div class="ico">📝</div><b>Caption</b>
+                <div class="rb-actions">
+                  <button class="icon-btn" title="Copy" onclick="copyText('caption-body','Caption copied')">⧉</button>
+                  <button class="icon-btn" title="Regenerate" onclick="regenComponent('caption')">🔄</button>
+                </div>
+              </div>
+              <div class="caption-text" id="caption-body" contenteditable="true" spellcheck="false"></div>
+            </div>
+            <div class="hint-line"><span class="i">i</span>Caption is editable — click the text to refine it. Tone and length auto-adjust per platform when Auto Optimize is on.</div>
+          </div>
+
+          <!-- HASHTAGS TAB -->
+          <div class="rtab" id="rtab-hashtags" style="display:none">
+            <div class="result-box">
+              <div class="rb-head">
+                <div class="ico">#</div><b>Hashtags</b>
+                <div class="rb-actions">
+                  <button class="icon-btn" title="Copy" onclick="copyText('tag-cloud','Hashtags copied')">⧉</button>
+                  <button class="icon-btn" title="Regenerate" onclick="regenComponent('hashtags')">🔄</button>
+                </div>
+              </div>
+              <div class="tag-cloud" id="tag-cloud"></div>
+            </div>
+          </div>
+
+          <!-- CTA TAB -->
+          <div class="rtab" id="rtab-cta" style="display:none">
+            <div class="result-box">
+              <div class="rb-head">
+                <div class="ico">🔗</div><b>Call to Action</b>
+                <div class="rb-actions">
+                  <button class="icon-btn" title="Copy" onclick="copyText('cta-body','CTA copied')">⧉</button>
+                  <button class="icon-btn" title="Regenerate" onclick="regenComponent('cta')">🔄</button>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+                <span class="btn btn-primary" style="pointer-events:none" id="cta-body">Play Now →</span>
+                <small style="color:var(--mut)" id="cta-note">Links to the game page. Adjusted per platform (e.g. "Link in bio" on Instagram).</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- COMPLIANCE -->
+        <div class="card card-pad" style="margin-bottom:16px" id="compliance-card">
+          <div class="section-title">
+            <div class="ico">🛡</div>
+            <h3>Content check<small>Validated against Meta, TikTok, X, YouTube &amp; LinkedIn policies + your brand rules</small></h3>
+            <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="renderCompliance(true)">🔄 Re-run check</button>
+          </div>
+          <div id="plat-specs" style="margin-bottom:8px"></div>
+          <div class="comp-grid" id="comp-grid"></div>
+          <div class="ready-banner" id="ready-banner">
+            <div class="rb-ic">✅</div>
+            <div><b>READY</b><small>All checks passed. This package follows your brand rules and platform requirements.</small></div>
+          </div>
+        </div>
+
+        <!-- REVISE -->
+        <div class="card card-pad" style="margin-bottom:16px">
+          <div class="section-title">
+            <div class="ico">🔄</div>
+            <h3>Revise your content<small>Not quite what you're looking for? Tell AI what to change.</small></h3>
+          </div>
+          <div class="chip-row" style="margin-bottom:12px" id="revise-chips">
+            <button class="chip" data-rev="Change Style">Change Style</button>
+            <button class="chip" data-rev="Change Theme">Change Theme</button>
+            <button class="chip" data-rev="Make More Professional">More Professional</button>
+            <button class="chip" data-rev="Make More Eye-Catching">More Eye-Catching</button>
+            <button class="chip" data-rev="Make Simpler">Make Simpler</button>
+            <button class="chip" data-rev="Reduce Text">Reduce Text</button>
+            <button class="chip" data-rev="Change Background">Change Background</button>
+            <button class="chip" data-rev="Change Caption">Change Caption</button>
+            <button class="chip" data-rev="Try Another Concept">Try Another Concept</button>
+          </div>
+          <div class="field" style="margin-bottom:10px">
+            <textarea class="input" id="revise-input" maxlength="200" placeholder="Tell AI what you want to change… e.g. Make the design more premium, use less text, keep the original character, and make the colors more vibrant." oninput="document.getElementById('rev-count').textContent=this.value.length+'/200'"></textarea>
+            <div class="char-count" id="rev-count">0/200</div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <select class="input" id="revise-scope" style="width:auto;min-width:180px;padding:9px 34px 9px 12px;font-size:12.5px">
+              <option value="selected">Revise selected tab only</option>
+              <option value="photo">Revise photo</option>
+              <option value="video">Revise video</option>
+              <option value="caption">Revise caption</option>
+              <option value="everything">Revise everything</option>
+            </select>
+            <button class="btn btn-outline" style="flex:1" onclick="reviseContent()">🔄 Regenerate</button>
+          </div>
+        </div>
+
+        <!-- APPROVE -->
+        <div class="card card-pad">
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-approve" style="flex:1;padding:13px" id="btn-approve" onclick="approveContent()">✓ Approve Content</button>
+            <button class="btn btn-ghost" style="flex:1;padding:13px" id="btn-addcal" onclick="openScheduleModal()" disabled>📅 Add to Calendar</button>
+          </div>
+          <div class="hint-line" style="justify-content:center"><span class="i">i</span><span id="approve-hint">Status: <b style="color:var(--draft)">Draft</b> — approve to unlock scheduling.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTENT CALENDAR ============ -->
+<section class="page" id="page-calendar">
+  <div class="page-head">
+    <div class="spark">📅</div>
+    <div>
+      <h1>Content Calendar</h1>
+      <p>Track what's generated, scheduled, and already posted — across every platform.</p>
+    </div>
+    <div class="head-actions">
+      <button class="btn btn-outline" onclick="openPlannerModal()">✨ AI Plan My Content</button>
+      <button class="btn btn-primary" onclick="go('generate')">✨ Generate Content</button>
+    </div>
+  </div>
+
+  <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)" id="cal-stats"></div>
+
+  <div class="card card-pad" style="margin-bottom:18px">
+    <div class="section-title" style="margin-bottom:8px">
+      <div class="ico">📈</div>
+      <h3>Posting progress<small id="prog-label">0 / 0 scheduled posts published this month</small></h3>
+    </div>
+    <div class="prog-wrap"><div class="prog-track"><div class="fill" id="prog-fill" style="width:0%"></div></div></div>
+  </div>
+
+  <div class="card card-pad">
+    <div class="cal-head-row">
+      <button class="cal-nav-btn" onclick="calShift(-1)" aria-label="Previous month">‹</button>
+      <div class="cal-title" id="cal-title">September 2026</div>
+      <button class="cal-nav-btn" onclick="calShift(1)" aria-label="Next month">›</button>
+      <div class="view-switch" id="view-switch">
+        <button class="active" data-view="month">Month</button>
+        <button data-view="week">Week</button>
+        <button data-view="day">Day</button>
+      </div>
+    </div>
+    <div class="filter-row">
+      <select class="input" id="f-plat" onchange="renderCalendar()">
+        <option value="">All platforms</option>
+        <option>Facebook</option><option>Instagram</option><option>TikTok</option>
+        <option>X</option><option>YouTube</option><option>LinkedIn</option>
+      </select>
+      <select class="input" id="f-game" onchange="renderCalendar()">
+        <option value="">All games</option>
+        <option value="banana">Banana Craze</option><option value="blazing">Blazing 7s</option>
+        <option value="ginto">Ginto Match</option><option value="lucky">Lucky Color</option>
+        <option value="ocean">Fortune Ocean</option><option value="bingo">Bingo Flux</option>
+        <option value="company">Company &amp; Events</option>
+      </select>
+      <select class="input" id="f-status" onchange="renderCalendar()">
+        <option value="">All statuses</option>
+        <option value="draft">Draft</option><option value="pending">Pending Approval</option>
+        <option value="sched">Scheduled</option><option value="posted">Posted</option>
+        <option value="failed">Failed</option>
+      </select>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="legend">
+      <span><i style="background:var(--draft)"></i>Draft</span>
+      <span><i style="background:var(--pending)"></i>Pending Approval</span>
+      <span><i style="background:var(--sched)"></i>Scheduled</span>
+      <span><i style="background:var(--posted)"></i>Posted</span>
+      <span><i style="background:var(--failed)"></i>Failed</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTENT LIBRARY ============ -->
+<section class="page" id="page-library">
+  <div class="page-head">
+    <div class="spark">📚</div>
+    <div>
+      <h1>Content Library</h1>
+      <p>Every generated package is saved here automatically, with full version history.</p>
+    </div>
+    <div class="head-actions">
+      <button class="btn btn-primary" onclick="go('generate')">✨ Generate Content</button>
+    </div>
+  </div>
+  <div class="filter-row">
+    <input class="input" id="lib-search" style="width:260px" placeholder="Search content…" oninput="renderLibrary()">
+    <select class="input" id="lib-game" onchange="renderLibrary()">
+      <option value="">All games</option>
+      <option value="banana">Banana Craze</option><option value="blazing">Blazing 7s</option>
+      <option value="ginto">Ginto Match</option><option value="lucky">Lucky Color</option>
+      <option value="ocean">Fortune Ocean</option><option value="bingo">Bingo Flux</option>
+      <option value="company">Company &amp; Events</option>
+    </select>
+    <select class="input" id="lib-status" onchange="renderLibrary()">
+      <option value="">All statuses</option>
+      <option value="draft">Draft</option><option value="pending">Pending Approval</option>
+      <option value="sched">Scheduled</option><option value="posted">Posted</option>
+    </select>
+  </div>
+  <div class="lib-grid" id="lib-grid"></div>
+</section>
+
+<!-- ============ BRAND ASSETS ============ -->
+<section class="page" id="page-assets">
+  <div class="page-head">
+    <div class="spark">🖼</div>
+    <div>
+      <h1>Brand Assets</h1>
+      <p>Approved logos, characters, backgrounds, and brand elements for every game. Upload once — AI reuses them everywhere.</p>
+    </div>
+    <div class="head-actions">
+      <select class="input" id="ba-game" style="width:auto;min-width:180px" onchange="renderBrandAssets()">
+        <option value="banana">🍌 Banana Craze</option>
+        <option value="blazing">🔥 Blazing 7s</option>
+        <option value="ginto">🪙 Ginto Match</option>
+        <option value="lucky">🍀 Lucky Color</option>
+        <option value="ocean">🌊 Fortune Ocean</option>
+        <option value="bingo">🎱 Bingo Flux</option>
+        <option value="company">🏢 Company &amp; Events</option>
+      </select>
+      <button class="btn btn-primary" onclick="toast('Upload dialog would open here (demo)')">＋ Upload Asset</button>
+    </div>
+  </div>
+  <div id="ba-content"></div>
+</section>
+
+<!-- ============ TEMPLATES ============ -->
+<section class="page" id="page-templates">
+  <div class="page-head">
+    <div class="spark">🎨</div>
+    <div>
+      <h1>Templates</h1>
+      <p>Proven layouts for common campaign types. Pick one and AI fills it with your game's assets and copy.</p>
+    </div>
+  </div>
+  <div class="tpl-grid" id="tpl-grid"></div>
+</section>
+
+<!-- ============ ANALYTICS ============ -->
+<section class="page" id="page-analytics">
+  <div class="page-head">
+    <div class="spark">📊</div>
+    <div>
+      <h1>Analytics</h1>
+      <p>How your generated content performs across platforms and games.</p>
+    </div>
+    <div class="head-actions">
+      <select class="input" style="width:auto"><option>Last 30 days</option><option>Last 90 days</option><option>This year</option></select>
+    </div>
+  </div>
+  <div class="stat-grid" style="grid-template-columns:repeat(5,1fr)">
+    <div class="stat" style="--sc:var(--blue)"><span class="s-ico">✨</span><div class="s-num">148</div><div class="s-lbl">Content generated</div></div>
+    <div class="stat" style="--sc:var(--posted)"><span class="s-ico">🚀</span><div class="s-num">96</div><div class="s-lbl">Posted</div></div>
+    <div class="stat" style="--sc:var(--purple)"><span class="s-ico">👁</span><div class="s-num">2.4M</div><div class="s-lbl">Total reach</div></div>
+    <div class="stat" style="--sc:var(--cyan)"><span class="s-ico">💬</span><div class="s-num">184K</div><div class="s-lbl">Engagement</div></div>
+    <div class="stat" style="--sc:var(--lime)"><span class="s-ico">📈</span><div class="s-num">7.6%</div><div class="s-lbl">Avg. engagement rate</div></div>
+  </div>
+  <div class="an-grid">
+    <div class="card card-pad">
+      <div class="section-title"><div class="ico">📱</div><h3>Platform distribution<small>Posts published per platform, last 30 days</small></h3></div>
+      <div class="bar-row"><span class="br-lbl">Facebook</span><div class="br-track"><div class="br-fill" style="width:88%;background:linear-gradient(90deg,#1d5fd0,#4f8cff)">32</div></div></div>
+      <div class="bar-row"><span class="br-lbl">Instagram</span><div class="br-track"><div class="br-fill" style="width:76%;background:linear-gradient(90deg,#c02669,#e6683c)">28</div></div></div>
+      <div class="bar-row"><span class="br-lbl">TikTok</span><div class="br-track"><div class="br-fill" style="width:50%;background:linear-gradient(90deg,#12b6bd,#66f2ea)">18</div></div></div>
+      <div class="bar-row"><span class="br-lbl">X (Twitter)</span><div class="br-track"><div class="br-fill" style="width:28%;background:linear-gradient(90deg,#3b4654,#7b8ba1)">10</div></div></div>
+      <div class="bar-row"><span class="br-lbl">YouTube</span><div class="br-track"><div class="br-fill" style="width:16%;background:linear-gradient(90deg,#c81d1d,#ff5b5b)">6</div></div></div>
+      <div class="bar-row" style="margin-bottom:0"><span class="br-lbl">LinkedIn</span><div class="br-track"><div class="br-fill" style="width:8%;background:linear-gradient(90deg,#0a66c2,#5ba3e8)">2</div></div></div>
+    </div>
+    <div class="card card-pad">
+      <div class="section-title"><div class="ico">🎮</div><h3>Engagement by game<small>Average engagement rate per game</small></h3></div>
+      <div class="spark-cols">
+        <div class="sc hi" style="height:100%" title="Banana Craze — 9.8%"></div>
+        <div class="sc" style="height:74%" title="Blazing 7s — 7.3%"></div>
+        <div class="sc" style="height:58%" title="Ginto Match — 5.7%"></div>
+        <div class="sc" style="height:82%" title="Lucky Color — 8.1%"></div>
+        <div class="sc" style="height:47%" title="Fortune Ocean — 4.6%"></div>
+        <div class="sc" style="height:66%" title="Bingo Flux — 6.5%"></div>
+      </div>
+      <div class="spark-lbls"><span>🍌 BC</span><span>🔥 B7</span><span>🪙 GM</span><span>🍀 LC</span><span>🌊 FO</span><span>🎱 BF</span></div>
+      <div class="hint-line" style="margin-top:14px"><span class="i">i</span>Banana Craze reels on Instagram are your best-performing content type this month — 9.8% average engagement.</div>
+    </div>
+  </div>
+  <div class="card card-pad" style="margin-top:16px">
+    <div class="section-title"><div class="ico">🏆</div><h3>Best-performing content<small>Top posts, last 30 days</small></h3></div>
+    <div id="an-top"></div>
+  </div>
+</section>
+
+<!-- ============ SETTINGS ============ -->
+<section class="page" id="page-settings">
+  <div class="page-head">
+    <div class="spark">⚙️</div>
+    <div>
+      <h1>Settings</h1>
+      <p>Brand rules and generation rules applied automatically to every piece of content.</p>
+    </div>
+  </div>
+  <div class="set-grid">
+    <div class="card card-pad">
+      <div class="section-title"><div class="ico">🎨</div><h3>Brand rules<small>Enforced during generation</small></h3></div>
+      <div class="rule-list">
+        <div class="rule-item"><span class="r-ic">🏷</span><div><b>Approved logos only</b><small>Game Engine master logo + per-game logos, current versions</small></div><button class="r-x" title="Remove rule">×</button></div>
+        <div class="rule-item"><span class="r-ic">🧸</span><div><b>Approved characters only</b><small>Official character art — no AI-invented mascots</small></div><button class="r-x" title="Remove rule">×</button></div>
+        <div class="rule-item"><span class="r-ic">🌈</span><div><b>Brand color palette</b><small>Each game's approved palette; neon accents allowed</small></div><button class="r-x" title="Remove rule">×</button></div>
+        <div class="rule-item"><span class="r-ic">🔤</span><div><b>Approved fonts</b><small>Space Grotesk for display, Inter for body copy</small></div><button class="r-x" title="Remove rule">×</button></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="toast('Add rule dialog (demo)')">＋ Add brand rule</button>
+    </div>
+    <div class="card card-pad">
+      <div class="section-title"><div class="ico">🛡</div><h3>Content rules<small>Compliance checks run before approval</small></h3></div>
+      <div class="rule-list">
+        <div class="rule-item"><span class="r-ic">⚠️</span><div><b>Required disclaimer</b><small>"18+ only. Play responsibly." on all promotional content</small></div><button class="r-x" title="Remove rule">×</button></div>
+        <div class="rule-item"><span class="r-ic">🚫</span><div><b>Restricted words</b><small>"guaranteed win", "free money", "risk-free" and 14 more</small></div><button class="r-x" title="Remove rule">×</button></div>
+        <div class="rule-item"><span class="r-ic">🖼</span><div><b>Restricted visuals</b><small>No real currency imagery; no minors in any creative</small></div><button class="r-x" title="Remove rule">×</button></div>
+        <div class="rule-item"><span class="r-ic">🔗</span><div><b>CTA rules</b><small>One CTA per post; approved verbs: Play, Spin, Join, Discover</small></div><button class="r-x" title="Remove rule">×</button></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="toast('Add rule dialog (demo)')">＋ Add content rule</button>
+    </div>
+    <div class="card card-pad">
+      <div class="section-title"><div class="ico">📱</div><h3>Platform settings<small>Connected accounts &amp; format presets</small></h3></div>
+      <div class="rule-list">
+        <div class="rule-item"><span class="r-ic" style="color:#4f8cff">f</span><div><b>Facebook — @GameEngineOfficial</b><small>1080×1350 posters · 15–30s video · casual tone</small></div><span class="badge b-posted" style="margin-left:auto"><span class="dot"></span>Connected</span></div>
+        <div class="rule-item"><span class="r-ic">📷</span><div><b>Instagram — @gameengine</b><small>1080×1350 + Reels 9:16 · emoji-friendly · "Link in bio" CTA</small></div><span class="badge b-posted" style="margin-left:auto"><span class="dot"></span>Connected</span></div>
+        <div class="rule-item"><span class="r-ic">♪</span><div><b>TikTok — @gameengine</b><small>9:16 · 9–15s hook-first video · trending audio allowed</small></div><span class="badge b-posted" style="margin-left:auto"><span class="dot"></span>Connected</span></div>
+        <div class="rule-item"><span class="r-ic">𝕏</span><div><b>X — @GameEngine</b><small>16:9 · captions ≤280 chars · max 4 hashtags · gambling promos need country certification</small></div><span class="badge b-notposted" style="margin-left:auto">Not connected</span></div>
+        <div class="rule-item"><span class="r-ic" style="color:#5ba3e8">in</span><div><b>LinkedIn</b><small>Promotion of gambling / games of chance is prohibited by LinkedIn ads policy</small></div><span class="badge b-failed" style="margin-left:auto"><span class="dot"></span>Ads prohibited</span></div>
+      </div>
+    </div>
+    <div class="card card-pad">
+      <div class="section-title"><div class="ico">✨</div><h3>AI settings<small>How the studio generates</small></h3></div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="toggle-row on" onclick="this.classList.toggle('on')"><div class="tg"></div><div><b>Auto compliance check</b><small>Run the content check on every generation before showing results.</small></div></div>
+        <div class="toggle-row on" onclick="this.classList.toggle('on')"><div class="tg"></div><div><b>Duplicate content warning</b><small>Warn when similar content was posted to the same platform recently.</small></div></div>
+        <div class="toggle-row on" onclick="this.classList.toggle('on')"><div class="tg"></div><div><b>Auto-save to library</b><small>Every generated package is stored with version history.</small></div></div>
+        <div class="toggle-row" onclick="this.classList.toggle('on')"><div class="tg"></div><div><b>Auto-publish scheduled posts</b><small>Post automatically at the scheduled time via connected accounts.</small></div></div>
+      </div>
+      <div class="field" style="margin-top:14px;margin-bottom:0">
+        <label>Default creative style</label>
+        <select class="input"><option>Vibrant arcade — bold type, neon glow, high energy</option><option>Premium minimal — clean layouts, restrained color</option><option>Playful cartoon — character-led, rounded shapes</option></select>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ============ GENERATION PROGRESS ============ -->
+<div id="gen-overlay">
+  <div class="gen-stage">
+    <div class="orb-wrap"><div class="orb-ring"></div><div class="orb-ring r2"></div><div class="orb"></div></div>
+    <h2>✨ Creating your content…</h2>
+    <div class="g-sub" id="gen-sub">Banana Craze · New Game Announcement · Facebook + Instagram</div>
+    <div class="gen-steps" id="gen-steps"></div>
+    <div class="gen-progress"><div class="gp-fill" id="gp-fill"></div></div>
+  </div>
+</div>
+
+<!-- ============ SCHEDULE MODAL ============ -->
+<div class="overlay" id="modal-schedule">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-schedule')" aria-label="Close">✕</button>
+    <h3>📅 Add to Calendar</h3>
+    <p class="m-sub">The generated photo, video, caption, hashtags, and CTA are attached to this event automatically.</p>
+    <div class="field"><label>Content</label><input class="input" id="sch-content" readonly></div>
+    <div class="field"><label>Platforms</label><div id="sch-plats"></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>Date</label><input type="date" class="input" id="sch-date"></div>
+      <div class="field"><label>Time</label><input type="time" class="input" id="sch-time" value="10:00"></div>
+    </div>
+    <div class="field"><label>Status</label>
+      <select class="input" id="sch-status">
+        <option value="sched">🔵 Scheduled</option>
+        <option value="draft">🟡 Draft — not scheduled yet</option>
+      </select>
+    </div>
+    <button class="btn btn-primary btn-big" onclick="confirmSchedule()">＋ Add to Calendar</button>
+  </div>
+</div>
+
+<!-- ============ MARK AS POSTED MODAL ============ -->
+<div class="overlay" id="modal-posted">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-posted')" aria-label="Close">✕</button>
+    <h3>✓ Mark as Posted</h3>
+    <p class="m-sub" id="mp-sub">Confirm this content went live so the calendar and history stay accurate.</p>
+    <div class="field"><label>Platform</label><input class="input" id="mp-plat" readonly></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>Posted date</label><input type="date" class="input" id="mp-date"></div>
+      <div class="field"><label>Posted time</label><input type="time" class="input" id="mp-time"></div>
+    </div>
+    <div class="field"><label>Post link</label><input class="input" id="mp-link" placeholder="Paste the social media post URL"></div>
+    <button class="btn btn-approve btn-big" onclick="confirmPosted()">✓ Confirm Posted</button>
+  </div>
+</div>
+
+<!-- ============ EVENT DETAIL MODAL ============ -->
+<div class="overlay" id="modal-event">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-event')" aria-label="Close">✕</button>
+    <div id="ev-detail"></div>
+  </div>
+</div>
+
+<!-- ============ DUPLICATE WARNING MODAL ============ -->
+<div class="overlay" id="modal-dupe">
+  <div class="modal" style="border-color:rgba(251,191,36,.45)">
+    <h3>⚠️ Similar Content Detected</h3>
+    <p class="m-sub">To keep your feed fresh, here's what was recently posted with the same game and purpose:</p>
+    <div class="result-box" id="dupe-info" style="margin-bottom:18px"></div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <button class="btn btn-primary" onclick="closeModal('modal-dupe');runGeneration(true)">✨ Use a Different Concept</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-dupe');runGeneration(false)">Create Anyway</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-dupe')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ AI PLANNER MODAL ============ -->
+<div class="overlay" id="modal-planner">
+  <div class="modal" style="max-width:600px">
+    <button class="modal-close" onclick="closeModal('modal-planner')" aria-label="Close">✕</button>
+    <h3>✨ AI Plan My Content</h3>
+    <p class="m-sub">Tell AI your campaign shape — it proposes a full posting calendar you can approve or edit.</p>
+    <div id="planner-form">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field"><label>Campaign duration</label>
+          <select class="input" id="pl-days"><option value="14">14 days</option><option value="30" selected>30 days</option><option value="60">60 days</option></select>
+        </div>
+        <div class="field"><label>Posting frequency</label>
+          <select class="input" id="pl-freq"><option value="1">1 post / week</option><option value="2" selected>2 posts / week</option><option value="3">3 posts / week</option><option value="5">5 posts / week</option></select>
+        </div>
+      </div>
+      <div class="field"><label>Platforms</label><div class="chip-row" id="pl-plats">
+        <button class="chip selected">Facebook</button><button class="chip selected">Instagram</button>
+        <button class="chip selected">TikTok</button><button class="chip">X</button>
+        <button class="chip">YouTube</button><button class="chip">LinkedIn</button>
+      </div></div>
+      <div class="field"><label>Games to feature</label><div class="chip-row" id="pl-games">
+        <button class="chip selected" data-g="banana">🍌 Banana Craze</button><button class="chip selected" data-g="blazing">🔥 Blazing 7s</button>
+        <button class="chip" data-g="ginto">🪙 Ginto Match</button><button class="chip selected" data-g="lucky">🍀 Lucky Color</button>
+        <button class="chip" data-g="ocean">🌊 Fortune Ocean</button><button class="chip" data-g="bingo">🎱 Bingo Flux</button>
+        <button class="chip" data-g="company">🏢 Company &amp; Events</button>
+      </div></div>
+      <button class="btn btn-primary btn-big" onclick="generatePlan()">✨ Generate Content Plan</button>
+    </div>
+    <div id="planner-result" style="display:none">
+      <div id="plan-list" style="display:flex;flex-direction:column;gap:9px;margin-bottom:18px"></div>
+      <div style="display:flex;gap:9px">
+        <button class="btn btn-approve" style="flex:1" onclick="approvePlan()">✓ Approve Plan</button>
+        <button class="btn btn-ghost" onclick="generatePlan()">🔄 Regenerate</button>
+        <button class="btn btn-ghost" onclick="backToPlannerForm()">Edit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= DATA ================= */
+const GAMES = {
+  banana:{name:'Banana Craze', e:'🍌', short:'BC',
+    grad:'radial-gradient(120% 100% at 50% 0%,#ffd23d 0%,#ff8a00 55%,#b45309 100%)',
+    soft:'linear-gradient(135deg,rgba(255,210,61,.25),rgba(255,138,0,.15))',
+    chars:['🐵','🍌','🦜'], orn:['🍌','⭐','🍃','🪙'],
+    heads:['GO BANANAS & WIN!','SPIN. MATCH. CRAZE!','THE JUNGLE PAYS OUT'],
+    assets:[['🐵','Monkey'],['🍌','Banana'],['🦜','Parrot'],['🌴','Jungle BG'],['🪙','Coin'],['⭐','Star']]},
+  blazing:{name:'Blazing 7s', e:'🔥', short:'B7',
+    grad:'radial-gradient(120% 100% at 50% 0%,#ff8a5b 0%,#e11d48 55%,#7f1d1d 100%)',
+    soft:'linear-gradient(135deg,rgba(255,106,61,.25),rgba(225,29,72,.15))',
+    chars:['🔥','7️⃣','💎'], orn:['🔥','💎','7️⃣','⚡'],
+    heads:['SEVENS ON FIRE!','FEEL THE HEAT. WIN BIG.','TRIPLE 7s, TRIPLE WINS'],
+    assets:[['🔥','Flame'],['7️⃣','Lucky 7'],['💎','Diamond'],['🌆','Neon BG'],['🪙','Coin'],['⚡','Bolt']]},
+  ginto:{name:'Ginto Match', e:'🪙', short:'GM',
+    grad:'radial-gradient(120% 100% at 50% 0%,#fde68a 0%,#f59e0b 55%,#92400e 100%)',
+    soft:'linear-gradient(135deg,rgba(253,230,138,.25),rgba(245,158,11,.15))',
+    chars:['🪙','👑','💰'], orn:['🪙','👑','✨','💰'],
+    heads:['MATCH THE GOLD!','GINTO. GLITTER. GLORY.','EVERY MATCH SHINES'],
+    assets:[['🪙','Gold Coin'],['👑','Crown'],['💰','Gold Bag'],['🏛','Vault BG'],['✨','Sparkle'],['💛','Gem']]},
+  lucky:{name:'Lucky Color', e:'🍀', short:'LC',
+    grad:'radial-gradient(120% 100% at 50% 0%,#6ee7b7 0%,#8b5cf6 60%,#312e81 100%)',
+    soft:'linear-gradient(135deg,rgba(52,211,153,.22),rgba(139,92,246,.18))',
+    chars:['🍀','🌈','🎨'], orn:['🍀','🌈','🎨','⭐'],
+    heads:['PICK YOUR LUCKY COLOR','EVERY COLOR CAN WIN','PAINT YOUR FORTUNE'],
+    assets:[['🍀','Clover'],['🌈','Rainbow'],['🎨','Palette'],['🌌','Aurora BG'],['🎡','Wheel'],['⭐','Star']]},
+  ocean:{name:'Fortune Ocean', e:'🌊', short:'FO',
+    grad:'radial-gradient(120% 100% at 50% 0%,#67e8f9 0%,#2563eb 60%,#1e3a8a 100%)',
+    soft:'linear-gradient(135deg,rgba(34,211,238,.22),rgba(37,99,235,.16))',
+    chars:['🐠','🐙','🧜'], orn:['🐚','🫧','🐠','🔱'],
+    heads:['DIVE INTO FORTUNE','TREASURE BELOW THE WAVES','THE OCEAN PAYS OUT'],
+    assets:[['🐠','Fish'],['🐙','Octopus'],['🔱','Trident'],['🌊','Reef BG'],['🐚','Shell'],['💎','Pearl']]},
+  bingo:{name:'Bingo Flux', e:'🎱', short:'BF',
+    grad:'radial-gradient(120% 100% at 50% 0%,#d8b4fe 0%,#7c3aed 60%,#4c1d95 100%)',
+    soft:'linear-gradient(135deg,rgba(192,132,252,.24),rgba(124,58,237,.16))',
+    chars:['🎱','✳️','🎉'], orn:['🎱','✳️','🎉','💜'],
+    heads:['BINGO, BUT ELECTRIC','DAUB. FLUX. WIN.','FULL CARD ENERGY'],
+    assets:[['🎱','Ball'],['✳️','Daub'],['🎉','Confetti'],['🌃','Grid BG'],['🃏','Card'],['💜','Gem']]},
+  company:{name:'Game Engine (Company)', e:'🏢', short:'GE', corporate:true,
+    grad:'radial-gradient(120% 100% at 50% 0%,#67e8f9 0%,#4f8cff 55%,#0f2a6b 100%)',
+    soft:'linear-gradient(135deg,rgba(79,140,255,.22),rgba(34,211,238,.14))',
+    chars:['🏢','🤝','🚀'], orn:['✨','🎪','🚀','💙'],
+    heads:['BUILDING THE FUTURE OF PLAY','WE ARE GAME ENGINE','PLAY. CREATE. GROW.'],
+    assets:[['🏢','Office'],['👥','Team'],['🎪','Event Stage'],['🏆','Awards'],['🎗','Badge'],['📸','Event Photos']]},
+};
+const PURPOSE_TAG = {
+  'New Game Announcement':'NEW GAME','Game Feature':'GAME FEATURE','Announcement':'ANNOUNCEMENT',
+  'Game Tutorial':'HOW TO PLAY','Feature Highlight':'FEATURE SPOTLIGHT','Social Media Engagement':'JOIN THE FUN',
+  'Seasonal Content':'LIMITED TIME','Custom':'GAME ENGINE',
+  'Company Event':'COMPANY EVENT','Company News':'COMPANY NEWS',"We're Hiring":'WE ARE HIRING',
+  'Partnership':'PARTNERSHIP','Milestone':'MILESTONE'
+};
+const CAPTIONS = {
+  'New Game Announcement':(g)=>`Ready for a new adventure? 🎮\n${g.name} has landed — dive in and experience the thrill, the fun, and the wins you've been waiting for!\n\nPlay. Enjoy. Repeat. 🔥\n\n18+ only. Play responsibly.`,
+  'Game Feature':(g)=>`More ways to play, more ways to win! ✨\nThe latest ${g.name} feature is live — spin it, match it, and watch the bonuses roll in.\n\nTap in and try it today. ${g.e}\n\n18+ only. Play responsibly.`,
+  'Announcement':(g)=>`Big news from ${g.name}! 📢\nSomething exciting just dropped — check it out before everyone else does.\n\nSee what's new. ${g.e}\n\n18+ only. Play responsibly.`,
+  'Game Tutorial':(g)=>`New to ${g.name}? We've got you. 🎯\nHere's how to play in 3 easy steps — from your first spin to your first win.\n\nWatch, learn, and play along! ${g.e}\n\n18+ only. Play responsibly.`,
+  'Feature Highlight':(g)=>`Spotlight on ${g.name} ⭐\nThis fan-favorite feature is why players keep coming back. Have you tried it yet?\n\nJump in today. ${g.e}\n\n18+ only. Play responsibly.`,
+  'Social Media Engagement':(g)=>`Tell us below 👇\nWhat's your luckiest ${g.name} moment so far? Drop it in the comments — best story gets featured!\n\n${g.e}✨\n\n18+ only. Play responsibly.`,
+  'Seasonal Content':(g)=>`The season just got luckier! 🎉\n${g.name} is celebrating with limited-time surprises you won't want to miss.\n\nDon't wait — the fun ends soon. ${g.e}\n\n18+ only. Play responsibly.`,
+  'Custom':(g)=>`Your ${g.name} moment starts now. ${g.e}\nFresh content, big energy, and more reasons to play every day.\n\nCome see what's waiting for you!\n\n18+ only. Play responsibly.`,
+  'Company Event':()=>`Something exciting is happening at Game Engine! 🎪\nJoin us for our upcoming company event — great people, great energy, and a look at what we're building next.\n\nSave the date. We can't wait to see you there! 💙`,
+  'Company News':()=>`News from the Game Engine team 📣\nWe're growing, shipping, and leveling up — here's the latest from inside the studio.\n\nThanks for being part of the journey!`,
+  "We're Hiring":()=>`We're hiring! 👥\nGame Engine is looking for talented people to help us build the future of play. If you love games, creativity, and great teams — we want to meet you.\n\nApply today or tag someone perfect for the role!`,
+  'Partnership':()=>`Big news — a new partnership! 🤝\nGame Engine is teaming up to bring even more fun to our players. Great things happen when great teams work together.\n\nStay tuned for what's coming next!`,
+  'Milestone':()=>`A milestone worth celebrating! 🏆\nThank you to our amazing players, partners, and team — we couldn't have done it without you.\n\nHere's to the next chapter! 🎉`
+};
+const HASHTAGS = (g,p)=>['#GameEngine',`#${g.name.replace(/\s/g,'')}`, ...({
+  'New Game Announcement':['#NewGame','#PlayToWin','#GamingFun','#GameEverywhere'],
+  'Game Feature':['#NewFeature','#PlayToWin','#GameUpdate','#GamingFun'],
+  'Announcement':['#GameNews','#GamingCommunity','#PlayNow'],
+  'Game Tutorial':['#HowToPlay','#GameTips','#LevelUp'],
+  'Feature Highlight':['#FanFavorite','#GameHighlights','#PlayToWin'],
+  'Social Media Engagement':['#GamingCommunity','#TellUs','#GamerLife'],
+  'Seasonal Content':['#LimitedTime','#SeasonalEvent','#DontMissOut'],
+  'Custom':['#PlayToWin','#GamingFun'],
+  'Company Event':['#GameEngineTeam','#CompanyEvent','#GamingIndustry'],
+  'Company News':['#GameEngineNews','#GamingIndustry','#StudioLife'],
+  "We're Hiring":['#Hiring','#GameJobs','#JoinOurTeam','#GamingCareers'],
+  'Partnership':['#Partnership','#GamingIndustry','#BetterTogether'],
+  'Milestone':['#Milestone','#ThankYou','#GameEngineTeam']
+}[p]||['#PlayToWin'])];
+const CTAS = {
+  'New Game Announcement':'Play Now →','Game Feature':'Try the Feature →','Announcement':"See What's New →",
+  'Game Tutorial':'Watch & Play →','Feature Highlight':'Play Today →','Social Media Engagement':'Join the Fun →',
+  'Seasonal Content':'Play Before It Ends →','Custom':'Discover More →',
+  'Company Event':'Join Us →','Company News':'Read More →',"We're Hiring":'Apply Now →',
+  'Partnership':'Learn More →','Milestone':'Celebrate With Us →'
+};
+/* ---- Real platform policy rulebook (social casino / gaming content) ---- */
+const PLATFORM_RULES = {
+  Facebook:{cap:63206, tags:30, img:'1080×1350 · 4:5', vid:'4:5 or 16:9 · 15–30s',
+    note:'Meta: 18+ audience & responsible-gaming messaging required for social casino content'},
+  Instagram:{cap:2200, tags:30, img:'1080×1350 · 4:5', vid:'Reels 9:16 · ≤90s',
+    note:'Meta: 18+ audience · max 30 hashtags · RG messaging · "Link in bio" CTA'},
+  TikTok:{cap:2200, tags:10, img:'1080×1920 · 9:16', vid:'9:16 · 9–15s hook-first',
+    note:'TikTok: gambling-style content 18+ only · must not appeal to minors'},
+  X:{cap:280, tags:4, img:'1600×900 · 16:9', vid:'16:9 · ≤2:20',
+    note:'X: caption ≤280 chars · ≤4 hashtags · gambling promos need country certification'},
+  YouTube:{cap:5000, tags:15, img:'1280×720 thumbnail', vid:'16:9 · Shorts 9:16',
+    note:'YouTube: age-restrict gambling-adjacent content · honest thumbnails, no clickbait claims'},
+  LinkedIn:{cap:3000, tags:5, img:'1200×627 · 1.91:1', vid:'16:9 · ≤10 min', prohibited:true,
+    note:'LinkedIn: promotion of gambling / games of chance is prohibited by ads policy'}
+};
+const RESTRICTED_TERMS=['guaranteed win','guaranteed wins','free money','risk-free','risk free','easy money','get rich','sure win','always win','always wins','no risk','win real money','cash guaranteed','cannot lose',"can't lose",'100% win','稳赚','保证中奖','免费领钱','零风险','必赢','稳赢','包中','躺赚'];
+const SAFE_SWAPS={'guaranteed win':'exciting wins','guaranteed wins':'exciting wins','free money':'bonus rewards','risk-free':'fun-first','risk free':'fun-first','easy money':'big fun','get rich':'level up','sure win':'thrilling play','always win':'keep the fun going','always wins':'keeps the fun going','no risk':'pure fun','win real money':'unlock rewards','cash guaranteed':'rewards await','cannot lose':'made for fun',"can't lose":'made for fun','100% win':'nonstop fun','稳赚':'畅玩','保证中奖':'惊喜连连','免费领钱':'奖励多多','零风险':'轻松上手','必赢':'精彩不断','稳赢':'乐趣满满','包中':'惊喜满满','躺赚':'轻松玩'};
+const APPROVED_CTA_VERBS=['play','spin','join','discover','see','watch','try','tap','read','apply','learn','celebrate','register'];
+const ZH_CTA_OK=/^(立即|试试|查看|边看|今天|加入|限时|了解|游玩|畅玩|来参加|阅读|一起|申请)/;
+const SHORT_CAPTION=(g)=>`${g.name} is live — more ways to play, more ways to have fun! ${g.e}\n\n18+ only. Play responsibly.`;
+const SHORT_CAPTION_ZH=(g)=>`${g.name} 上线啦 —— 更多玩法，更多乐趣！${g.e}\n\n仅限18岁以上。请理性游戏。`;
+const CAPTIONS_ZH={
+  'New Game Announcement':(g)=>`准备好迎接新冒险了吗？🎮\n${g.name} 正式上线 —— 立即体验前所未有的刺激与乐趣！\n\n玩起来，停不下来！🔥\n\n仅限18岁以上。请理性游戏。`,
+  'Game Feature':(g)=>`更多玩法，更多惊喜！✨\n${g.name} 全新功能已上线 —— 转起来、配起来，奖励滚滚来。\n\n今天就来试试吧 ${g.e}\n\n仅限18岁以上。请理性游戏。`,
+  'Announcement':(g)=>`${g.name} 有大消息！📢\n精彩内容刚刚上线 —— 抢先一步了解。\n\n快来看看 ${g.e}\n\n仅限18岁以上。请理性游戏。`,
+  'Game Tutorial':(g)=>`第一次玩 ${g.name}？别担心 🎯\n三个简单步骤，从第一次旋转到第一次胜利。\n\n边看边学边玩！${g.e}\n\n仅限18岁以上。请理性游戏。`,
+  'Feature Highlight':(g)=>`聚焦 ${g.name} ⭐\n这个人气功能就是玩家回归的理由。你试过了吗？\n\n今天就加入 ${g.e}\n\n仅限18岁以上。请理性游戏。`,
+  'Social Media Engagement':(g)=>`在评论区告诉我们 👇\n你在 ${g.name} 里最幸运的时刻是什么？最佳故事将被精选展示！\n\n${g.e}✨\n\n仅限18岁以上。请理性游戏。`,
+  'Seasonal Content':(g)=>`这个季节更有惊喜！🎉\n${g.name} 限时活动进行中，错过就没有了。\n\n快来参与 ${g.e}\n\n仅限18岁以上。请理性游戏。`,
+  'Custom':(g)=>`属于你的 ${g.name} 时刻现在开始 ${g.e}\n新内容、新玩法，每天都有新理由来玩。\n\n快来看看吧！\n\n仅限18岁以上。请理性游戏。`,
+  'Company Event':()=>`Game Engine 有精彩活动！🎪\n诚邀你参加我们即将举行的公司活动 —— 优秀的伙伴、满满的活力，抢先了解我们的下一步计划。\n\n记得预留时间，期待与你相见！💙`,
+  'Company News':()=>`来自 Game Engine 团队的最新动态 📣\n我们在成长、在交付、在升级 —— 这是工作室内部的最新消息。\n\n感谢你一路同行！`,
+  "We're Hiring":()=>`我们正在招聘！👥\nGame Engine 正在寻找优秀人才，与我们一起打造游戏的未来。如果你热爱游戏、创意和优秀的团队 —— 我们期待认识你。\n\n立即申请，或推荐合适的朋友！`,
+  'Partnership':()=>`重磅消息 —— 全新合作！🤝\nGame Engine 携手合作伙伴，为玩家带来更多乐趣。优秀的团队携手，成就更好的未来。\n\n敬请期待接下来的精彩！`,
+  'Milestone':()=>`值得庆祝的里程碑！🏆\n感谢我们出色的玩家、合作伙伴和团队 —— 没有你们就没有今天。\n\n共赴下一个篇章！🎉`
+};
+const CTAS_ZH={'New Game Announcement':'立即游玩 →','Game Feature':'试试新功能 →','Announcement':'查看新内容 →','Game Tutorial':'边看边玩 →','Feature Highlight':'今天就玩 →','Social Media Engagement':'加入互动 →','Seasonal Content':'限时开玩 →','Custom':'了解更多 →','Company Event':'来参加 →','Company News':'阅读更多 →',"We're Hiring":'立即申请 →','Partnership':'了解更多 →','Milestone':'一起庆祝 →'};
+
+const PLAT_META = {
+  Facebook:{ico:'f',bg:'#1877f2'}, Instagram:{ico:'📷',bg:'linear-gradient(45deg,#f09433,#dc2743,#bc1888)'},
+  TikTok:{ico:'♪',bg:'#111'}, X:{ico:'𝕏',bg:'#14171a'}, YouTube:{ico:'▶',bg:'#f00'}, LinkedIn:{ico:'in',bg:'#0a66c2'}
+};
+const STATUS_META = {
+  draft:['Draft','b-draft','ev-draft','🟡'], pending:['Pending Approval','b-pending','ev-pending','🟣'],
+  sched:['Scheduled','b-sched','ev-sched','🔵'], posted:['Posted','b-posted','ev-posted','🟢'],
+  failed:['Failed','b-failed','ev-failed','🔴'], notposted:['Not Posted','b-notposted','ev-draft','⚪']
+};
+const TODAY = new Date(2026,8,8);
+
+/* Seeded content store */
+let NEXT_ID = 100;
+const CONTENT = [
+  {id:1, game:'banana', type:'package', purpose:'New Game Announcement', plats:['Instagram'], status:'posted', date:'2026-09-02', time:'10:03', created:'2026-08-30', versions:['Generated','Revised','Approved','Posted'], link:'instagram.com/p/bc-launch', head:0},
+  {id:2, game:'blazing', type:'video', purpose:'Game Feature', plats:['TikTok'], status:'posted', date:'2026-09-04', time:'18:30', created:'2026-09-01', versions:['Generated','Approved','Posted'], link:'tiktok.com/@ge/b7-fire', head:0},
+  {id:3, game:'lucky', type:'photo', purpose:'Feature Highlight', plats:['Facebook'], status:'posted', date:'2026-09-07', time:'12:00', created:'2026-09-03', versions:['Generated','Revised','Approved','Posted'], link:'facebook.com/ge/lc-colors', head:2},
+  {id:4, game:'ginto', type:'package', purpose:'Announcement', plats:['Instagram'], status:'sched', date:'2026-09-09', time:'10:00', created:'2026-09-05', versions:['Generated','Approved'], head:1},
+  {id:5, game:'ocean', type:'video', purpose:'New Game Announcement', plats:['YouTube'], status:'failed', date:'2026-09-05', time:'16:00', created:'2026-09-02', versions:['Generated','Approved'], head:0},
+  {id:6, game:'banana', type:'package', purpose:'Game Tutorial', plats:['Instagram','TikTok'], status:'sched', date:'2026-09-15', time:'10:00', created:'2026-09-06', versions:['Generated','Approved'], head:1},
+  {id:7, game:'blazing', type:'photo', purpose:'Seasonal Content', plats:['Facebook'], status:'draft', date:'2026-09-17', time:'14:00', created:'2026-09-07', versions:['Generated'], head:2},
+  {id:8, game:'bingo', type:'video', purpose:'Social Media Engagement', plats:['TikTok'], status:'sched', date:'2026-09-21', time:'19:00', created:'2026-09-07', versions:['Generated','Approved'], head:0},
+  {id:9, game:'lucky', type:'package', purpose:'Announcement', plats:['Instagram'], status:'pending', date:'2026-09-24', time:'11:00', created:'2026-09-08', versions:['Generated','Revised'], head:1},
+  {id:10, game:'ginto', type:'photo', purpose:'Game Feature', plats:['Facebook'], status:'sched', date:'2026-09-28', time:'09:30', created:'2026-09-08', versions:['Generated','Approved'], head:2},
+  {id:11, game:'company', type:'photo', purpose:'Company Event', plats:['LinkedIn','Facebook'], status:'sched', date:'2026-09-18', time:'15:00', created:'2026-09-08', versions:['Generated','Approved'], head:0},
+];
+
+/* ================= STATE ================= */
+const state = {
+  page:'generate', type:'package', game:'banana', purpose:'New Game Announcement',
+  plats:['Facebook','Instagram'], assetMode:'mine',
+  current:null, headIdx:0, playing:false, playT:null,
+  cal:{anchor:new Date(2026,8,8), view:'month'}, evOpen:null
+};
+
+/* ================= HELPERS ================= */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+function toast(msg,warn){const w=$('#toast-wrap');const t=document.createElement('div');t.className='toast'+(warn?' warn':'');t.innerHTML=(warn?'⚠️ ':'✅ ')+msg;w.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),320)},3200)}
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+$$('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
+function copyText(id,msg){const el=document.getElementById(id);const done=()=>toast(msg);if(navigator.clipboard){navigator.clipboard.writeText(el.innerText).then(done).catch(done)}else done()}
+const LOC=()=>state.lang==='zh'?'zh-CN':'en-US';
+function fmtDate(d){return new Date(d+'T00:00').toLocaleDateString(LOC(),{month:'long',day:'numeric',year:'numeric'})}
+function platIcons(plats){return plats.map(p=>{const m=PLAT_META[p]||{ico:'?',bg:'#333'};return `<span style="background:${m.bg};width:20px;height:20px;font-size:10px;border-radius:6px;display:inline-grid;place-items:center;color:#fff;font-weight:700">${m.ico}</span>`}).join('')}
+
+/* ================= NAVIGATION ================= */
+function go(page){
+  state.page=page;
+  $$('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
+  $$('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+page));
+  if(page==='dashboard')renderDashboard();
+  if(page==='calendar')renderCalendar();
+  if(page==='library')renderLibrary();
+  if(page==='assets')renderBrandAssets();
+  window.scrollTo({top:0});
+}
+$$('.nav-item').forEach(n=>n.addEventListener('click',()=>go(n.dataset.page)));
+
+/* ================= DASHBOARD ================= */
+function counts(){
+  return {
+    total:CONTENT.length,
+    draft:CONTENT.filter(c=>c.status==='draft').length,
+    sched:CONTENT.filter(c=>c.status==='sched').length,
+    posted:CONTENT.filter(c=>c.status==='posted').length,
+    attention:CONTENT.filter(c=>c.status==='pending'||c.status==='failed').length
+  };
+}
+function renderDashboard(){
+  const c=counts();
+  $('#dash-stats').innerHTML=`
+    <div class="stat" style="--sc:var(--blue)"><span class="s-ico">📦</span><div class="s-num">${c.total}</div><div class="s-lbl">Total Content</div></div>
+    <div class="stat" style="--sc:var(--draft)"><span class="s-ico">📝</span><div class="s-num">${c.draft}</div><div class="s-lbl">Drafts</div></div>
+    <div class="stat" style="--sc:var(--sched)"><span class="s-ico">📅</span><div class="s-num">${c.sched}</div><div class="s-lbl">Scheduled</div></div>
+    <div class="stat" style="--sc:var(--posted)"><span class="s-ico">🚀</span><div class="s-num">${c.posted}</div><div class="s-lbl">Posted</div></div>
+    <div class="stat" style="--sc:var(--failed)"><span class="s-ico">⚠️</span><div class="s-num">${c.attention}</div><div class="s-lbl">Needs Attention</div></div>`;
+  const recent=[...CONTENT].sort((a,b)=>b.created.localeCompare(a.created)).slice(0,5);
+  $('#dash-recent').innerHTML=recent.map(it=>{
+    const g=GAMES[it.game],s=STATUS_META[it.status];
+    return `<div class="recent-item">
+      <div class="ri-th" style="background:${g.soft};border:1px solid var(--line)">${g.e}</div>
+      <div><b>${g.name} — ${it.purpose}</b><small>${it.type==='package'?'Full package':it.type==='video'?'Video':'Photo'} · ${it.plats.join(' + ')} · created ${fmtDate(it.created)}</small></div>
+      <span class="badge ${s[1]}"><span class="dot"></span>${s[0]}</span></div>`;
+  }).join('');
+  const up=CONTENT.filter(it=>it.status==='sched'&&it.date>='2026-09-08').sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
+  $('#dash-upcoming').innerHTML=up.length?up.map(it=>{
+    const g=GAMES[it.game];
+    return `<div class="recent-item">
+      <div class="ri-th" style="background:${g.soft};border:1px solid var(--line)">${g.e}</div>
+      <div><b>${g.name}</b><small>${fmtDate(it.date)} · ${it.time} · ${it.plats.join(' + ')}</small></div>
+      <span style="margin-left:auto;display:flex;gap:4px">${platIcons(it.plats)}</span></div>`;
+  }).join(''):'<p style="color:var(--mut);font-size:13px;padding:8px 0">Nothing scheduled yet — generate content and add it to your calendar.</p>';
+}
+
+/* ================= GENERATE PAGE SETUP ================= */
+$$('#page-generate .opt-card').forEach(c=>c.addEventListener('click',()=>{
+  $$('#page-generate .opt-card').forEach(x=>x.classList.remove('selected'));
+  c.classList.add('selected'); state.type=c.dataset.type;
+}));
+$('#purpose-row').addEventListener('click',e=>{
+  const ch=e.target.closest('.chip'); if(!ch)return;
+  $$('#purpose-row .chip').forEach(x=>x.classList.remove('selected'));
+  ch.classList.add('selected'); state.purpose=ch.dataset.purpose;
+  $('#custom-brief-wrap').style.display=state.purpose==='Custom'?'block':'none';
+});
+$('#plat-grid').addEventListener('click',e=>{
+  const p=e.target.closest('.plat'); if(!p)return;
+  p.classList.toggle('selected');
+  state.plats=$$('#plat-grid .plat.selected').map(x=>x.dataset.plat);
+});
+$$('#page-generate .mode').forEach(m=>m.addEventListener('click',()=>{
+  $$('#page-generate .mode').forEach(x=>x.classList.remove('selected'));
+  m.classList.add('selected'); state.assetMode=m.dataset.mode;
+  $('#asset-lib-wrap').style.opacity=m.dataset.mode==='mine'?'1':'.45';
+}));
+function onGameChange(){
+  state.game=$('#game-select').value;
+  const g=GAMES[state.game];
+  const isCo=!!g.corporate;
+  $('#game-loaded-hint').textContent=isCo
+    ?`Loaded for ${g.name}: corporate logo, team & event photos, awards, brand guidelines, and tone-of-voice rules.`
+    :`Loaded for ${g.name}: logo, ${g.chars.length} characters, 4 backgrounds, game symbols, brand rules, and content restrictions.`;
+  /* show only the purposes that fit this subject */
+  const scope=isCo?'company':'game';
+  let selVisible=false;
+  $$('#purpose-row .chip').forEach(ch=>{
+    const s=ch.dataset.scope;
+    const vis=s==='both'||s===scope;
+    ch.style.display=vis?'':'none';
+    if(!vis)ch.classList.remove('selected');
+    if(vis&&ch.classList.contains('selected'))selVisible=true;
+  });
+  if(!selVisible){
+    const first=$$('#purpose-row .chip').find(ch=>ch.style.display!=='none');
+    if(first){first.classList.add('selected');state.purpose=first.dataset.purpose;
+      $('#custom-brief-wrap').style.display=state.purpose==='Custom'?'block':'none';}
+  }
+  renderAssetRow();
+}
+function renderAssetRow(){
+  const g=GAMES[state.game];
+  $('#asset-row').innerHTML=
+    `<button class="asset selected" style="background:${g.soft}"><span style="font-family:'Space Grotesk';font-weight:800;font-size:17px">${g.short}</span><span class="lbl">Logo</span></button>`+
+    g.assets.map((a,i)=>`<button class="asset ${i<4?'selected':''}" style="background:${g.soft}">${a[0]}<span class="lbl">${a[1]}</span></button>`).join('')+
+    `<button class="asset upload-tile"><span class="plus">＋</span>Upload</button>`;
+  $$('#asset-row .asset').forEach(a=>a.addEventListener('click',()=>{
+    if(a.classList.contains('upload-tile')){toast('Upload dialog would open here (demo)');return}
+    a.classList.toggle('selected');
+  }));
+}
+renderAssetRow();
+
+/* ================= GENERATION FLOW ================= */
+function startGeneration(){
+  if(!state.plats.length){toast('Select at least one platform first',true);return}
+  const dupe=CONTENT.find(c=>c.game===state.game&&c.purpose===state.purpose&&c.status==='posted'&&
+    (TODAY-new Date(c.date+'T00:00'))/864e5<=14&&c.plats.some(p=>state.plats.includes(p)));
+  if(dupe){
+    const g=GAMES[dupe.game];
+    $('#dupe-info').innerHTML=`<div style="display:flex;gap:12px;align-items:center">
+      <div style="width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:21px;background:${g.soft};border:1px solid var(--line)">${g.e}</div>
+      <div><b style="font-size:13.5px">${g.name} — ${dupe.purpose}</b>
+      <small style="color:var(--mut);display:block">${dupe.plats.join(' + ')} · Posted ${fmtDate(dupe.date)}</small></div></div>`;
+    openModal('modal-dupe'); return;
+  }
+  runGeneration(false);
+}
+const GEN_STEPS=[
+  ['campaign','Understanding campaign'],['assets','Selecting approved assets'],['concept','Creating visual concept'],
+  ['photo','Generating photo'],['video','Generating video'],['caption','Writing caption'],
+  ['hashtags','Creating hashtags'],['cta','Creating CTA'],['check','Running compliance check'],['final','Finalizing content']
+];
+function runGeneration(altConcept){
+  const g=GAMES[state.game];
+  if(altConcept)state.headIdx=(state.headIdx+1)%g.heads.length;
+  const steps=GEN_STEPS.filter(s=>{
+    if(state.type==='photo'&&s[0]==='video')return false;
+    if(state.type==='video'&&s[0]==='photo')return false;
+    return true;
+  });
+  $('#gen-sub').textContent=`${g.name} · ${state.purpose} · ${state.plats.join(' + ')}`;
+  $('#gen-steps').innerHTML=steps.map(s=>`<div class="gstep" data-s="${s[0]}"><span class="gs-ic"></span>${s[1]}</div>`).join('');
+  $('#gp-fill').style.width='0%';
+  $('#gen-overlay').classList.add('open');
+  let i=0;
+  const tick=()=>{
+    const rows=$$('#gen-steps .gstep');
+    if(i>0){rows[i-1].classList.remove('doing');rows[i-1].classList.add('done')}
+    if(i>=rows.length){
+      setTimeout(()=>{$('#gen-overlay').classList.remove('open');showResults()},420);
+      return;
+    }
+    rows[i].classList.add('doing');
+    $('#gp-fill').style.width=Math.round(((i+1)/rows.length)*100)+'%';
+    i++; setTimeout(tick, i<=2?420:(520+Math.random()*360));
+  };
+  setTimeout(tick,300);
+}
+function buildPoster(){
+  const g=GAMES[state.game];
+  const head=g.heads[state.headIdx%g.heads.length];
+  const orn=g.orn;
+  const poster=$('#poster');
+  poster.style.background=g.grad;
+  poster.innerHTML=`
+    <div class="p-shine"></div>
+    <div class="p-logo"><span class="lm">G</span>GAME ENGINE</div>
+    <span class="p-orn" style="top:16%;left:9%;transform:rotate(-18deg)">${orn[0]}</span>
+    <span class="p-orn" style="top:12%;right:10%;transform:rotate(14deg);font-size:20px">${orn[1]}</span>
+    <span class="p-orn" style="bottom:20%;left:7%;transform:rotate(10deg);font-size:22px">${orn[2]}</span>
+    <span class="p-orn" style="bottom:26%;right:8%;transform:rotate(-12deg)">${orn[3]}</span>
+    <div class="p-char">${g.chars[state.headIdx%g.chars.length]}</div>
+    <div class="p-head">${head.replace('. ','.<br>')}</div>
+    <div class="p-tag">${PURPOSE_TAG[state.purpose]||'GAME ENGINE'} · ${g.name.toUpperCase()}</div>
+    <div class="p-cta">${(CTAS[state.purpose]||'Play Now →').toUpperCase()}</div>`;
+}
+function showResults(){
+  const g=GAMES[state.game];
+  state.current={game:state.game,type:state.type,purpose:state.purpose,plats:[...state.plats],approved:false,saved:false,headIdx:state.headIdx};
+  $('#result-empty').style.display='none';
+  $('#result-wrap').style.display='block';
+  $('#result-meta').textContent=`${g.name} · ${state.purpose} · ${state.plats.join(' + ')}`;
+  const showPhoto=state.type!=='video', showVideo=state.type!=='photo';
+  $$('#result-tabs .tab').forEach(t=>{
+    const k=t.dataset.tab; let vis=true;
+    if(k==='photo')vis=showPhoto; if(k==='video')vis=showVideo;
+    t.style.display=vis?'':'none';
+  });
+  selectTab(showPhoto?'photo':'video');
+  buildPoster();
+  $('#vf-bg').style.background=g.grad;
+  $('#vid-label').textContent=`${g.name} — 15s reel · ${state.plats.includes('TikTok')||state.plats.includes('Instagram')?'9:16':'16:9'}`;
+  stopPlay(); $('#vid-fill').style.width='0%'; $('#vid-cur').textContent='0:00';
+  const auto=$('#auto-opt').classList.contains('on');
+  state.current.auto=auto;
+  /* caption — auto-optimized for the strictest selected platform (e.g. X ≤280 chars) */
+  const zh=state.lang==='zh';
+  let capText;
+  if(state.purpose==='Custom'&&$('#custom-brief').value.trim()){
+    const brief=$('#custom-brief').value.trim();
+    const disc=g.corporate?'':(zh?'\n\n仅限18岁以上。请理性游戏。':'\n\n18+ only. Play responsibly.');
+    capText=zh?`${brief} ${g.e}\n\n${g.name} —— 想怎么玩就怎么玩！${disc}`:`${brief} ${g.e}\n\n${g.name} — play it your way!${disc}`;
+  }else{
+    capText=((zh?CAPTIONS_ZH:CAPTIONS)[state.purpose]||CAPTIONS['Custom'])(g);
+  }
+  const capLimit=Math.min(...state.plats.map(p=>PLATFORM_RULES[p].cap));
+  if(auto&&capText.length>capLimit)capText=(zh?SHORT_CAPTION_ZH:SHORT_CAPTION)(g);
+  $('#caption-body').textContent=capText;
+  /* hashtags — capped to the strictest platform limit when Auto Optimize is on */
+  let tags=HASHTAGS(g,state.purpose);
+  const tagLimit=Math.min(...state.plats.map(p=>PLATFORM_RULES[p].tags));
+  if(auto&&tags.length>tagLimit)tags=tags.slice(0,tagLimit);
+  $('#tag-cloud').innerHTML=tags.map(h=>`<span class="htag">${h}</span>`).join('');
+  $('#cta-body').textContent=(zh?CTAS_ZH:CTAS)[state.purpose]||(zh?'立即游玩 →':'Play Now →');
+  $('#cta-note').textContent=state.plats.includes('Instagram')?'Adjusted per platform — becomes "Link in bio 🎮" on Instagram.':'Links to the game page on every platform.';
+  renderCompliance();
+  $('#btn-addcal').disabled=true;
+  document.getElementById('result-wrap').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function selectTab(k){
+  $$('#result-tabs .tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===k));
+  $$('.rtab').forEach(r=>r.style.display='none');
+  document.getElementById('rtab-'+k).style.display='block';
+}
+document.getElementById('result-tabs').addEventListener('click',e=>{const t=e.target.closest('.tab');if(t)selectTab(t.dataset.tab)});
+
+/* ================= COMPLIANCE ENGINE ================= */
+function runChecks(){
+  const c=state.current; if(!c)return [];
+  const plats=c.plats;
+  const g=GAMES[c.game];
+  const caption=$('#caption-body').innerText.trim();
+  const tags=[...document.querySelectorAll('#tag-cloud .htag')].map(t=>t.textContent.trim());
+  const cta=$('#cta-body').textContent.trim();
+  const posterText=(g.heads[state.headIdx%g.heads.length]+' '+(PURPOSE_TAG[c.purpose]||'')).toLowerCase();
+  const bodyText=(caption+' '+cta).toLowerCase();
+  const capLimit=Math.min(...plats.map(p=>PLATFORM_RULES[p].cap));
+  const capStrict=plats.reduce((m,p)=>PLATFORM_RULES[p].cap<PLATFORM_RULES[m].cap?p:m,plats[0]);
+  const tagLimit=Math.min(...plats.map(p=>PLATFORM_RULES[p].tags));
+  const tagStrict=plats.reduce((m,p)=>PLATFORM_RULES[p].tags<PLATFORM_RULES[m].tags?p:m,plats[0]);
+  const checks=[];
+  const add=(name,pass,d)=>checks.push(Object.assign({name,pass},d||{}));
+  const isGaming=!g.corporate;
+
+  const banned=plats.filter(p=>PLATFORM_RULES[p].prohibited);
+  if(isGaming){
+    add('Platform eligibility',banned.length===0,{
+      problem:`${banned.join(', ')} does not allow promotion of gambling or games of chance.`,
+      reason:PLATFORM_RULES.LinkedIn.note+'.',
+      fix:`Remove ${banned.join(', ')} and publish to the compliant platforms only.`,
+      fixLabel:'Remove '+banned.join(', '),fixFn:'fixRemoveBanned'});
+
+    add('Age gate (18+)',/(18\s*\+|18岁)/.test(caption),{
+      problem:'Caption does not include the "18+" age gate.',
+      reason:'Meta and TikTok require an explicit 18+ age gate on social casino content.',
+      fix:'Append "18+ only." to the caption.',fixLabel:'Add age gate',fixFn:'fixDisclaimer'});
+
+    add('Responsible-gaming disclaimer',/(play responsibly|理性游戏)/i.test(caption),{
+      problem:'Caption is missing the "Play responsibly." disclaimer.',
+      reason:'Your content rules and Meta responsible-gaming guidance require it on all promotional content.',
+      fix:'Append "Play responsibly." to the caption.',fixLabel:'Add disclaimer',fixFn:'fixDisclaimer'});
+  }else{
+    add('Platform eligibility — corporate content (all platforms OK, incl. LinkedIn)',true);
+    add('No gambling promotion in corporate post',!/(jackpot|casino|bet now|free spins)/i.test(bodyText),{
+      problem:'Corporate post contains game-promotion wording.',
+      reason:'Corporate content posted to LinkedIn must not promote games of chance.',
+      fix:'Keep this post about the company; create a separate game post for other platforms.',
+      fixLabel:'Reword automatically',fixFn:'fixRestricted'});
+  }
+
+  const hits=RESTRICTED_TERMS.filter(t=>bodyText.includes(t));
+  add('Restricted wording',hits.length===0,{
+    problem:`Found restricted term${hits.length>1?'s':''}: "${hits.join('", "')}".`,
+    reason:'Meta, TikTok and X policies prohibit implying guaranteed winnings or financial return.',
+    fix:'Replace with approved, fun-focused phrasing.',fixLabel:'Reword automatically',fixFn:'fixRestricted'});
+
+  if(c.type!=='video'){
+    const phits=RESTRICTED_TERMS.filter(t=>posterText.includes(t));
+    add('Creative wording (on-image)',phits.length===0,{
+      problem:`Poster text contains: "${phits.join('", "')}".`,
+      reason:'On-image claims are reviewed under the same misleading-claims policies as captions.',
+      fix:'Regenerate the poster with a different concept.',fixLabel:'New concept',fixFn:'fixPoster'});
+  }
+
+  add(`Caption length (${capStrict} ≤ ${capLimit.toLocaleString()})`,caption.length<=capLimit,{
+    problem:`Caption is ${caption.length} characters — over the ${capStrict} limit of ${capLimit}.`,
+    reason:PLATFORM_RULES[capStrict].note+'.',
+    fix:'Shorten the caption while keeping the age gate and disclaimer.',
+    fixLabel:'Shorten caption',fixFn:'fixCapLen'});
+
+  add(`Hashtag limit (${tagStrict} ≤ ${tagLimit})`,tags.length<=tagLimit,{
+    problem:`${tags.length} hashtags — ${tagStrict} allows at most ${tagLimit}.`,
+    reason:PLATFORM_RULES[tagStrict].note+'.',
+    fix:`Keep only the ${tagLimit} most relevant hashtags.`,
+    fixLabel:'Trim hashtags',fixFn:'fixTags'});
+
+  const verb=(cta.split(/\s/)[0]||'').toLowerCase().replace(/[^a-z']/g,'');
+  add('CTA compliance',(APPROVED_CTA_VERBS.includes(verb)||ZH_CTA_OK.test(cta))&&!RESTRICTED_TERMS.some(t=>cta.toLowerCase().includes(t)),{
+    problem:`CTA "${cta}" doesn't use an approved action verb (${APPROVED_CTA_VERBS.slice(0,4).join(', ')}…).`,
+    reason:'Your CTA rules allow one CTA per post, starting with an approved verb.',
+    fix:'Reset the CTA to "Play Now →".',fixLabel:'Reset CTA',fixFn:'fixCTA'});
+
+  add('No appeal to minors (characters reviewed)',true);
+  add('Approved assets & logo only',true);
+  add('No real-currency imagery',true);
+  if(c.type!=='video')add('Image dimensions'+(c.auto?' — auto per platform':''),true);
+  if(c.type!=='photo')add('Video specs'+(c.auto?' — auto per platform':''),true);
+  return checks;
+}
+function renderCompliance(manual){
+  if(!state.current)return;
+  const plats=state.current.plats;
+  $('#plat-specs').innerHTML=plats.map(p=>{const r=PLATFORM_RULES[p];
+    return `<span class="plat-spec">${platIcons([p])}<b>${p}</b> ${r.img} · caption ≤${r.cap.toLocaleString()} · ≤${r.tags} tags${r.prohibited?' · <b style="color:var(--failed)">ads prohibited</b>':''}</span>`}).join('');
+  const checks=runChecks();
+  const failing=checks.filter(c=>!c.pass), passing=checks.filter(c=>c.pass);
+  $('#comp-grid').innerHTML=
+    failing.map(c=>`<div class="comp-fail">
+      <div class="cf-name"><span class="cchk">!</span>${c.name}</div>
+      <div class="cf-row"><b>Problem:</b> ${c.problem}</div>
+      <div class="cf-row"><b>Reason:</b> ${c.reason}</div>
+      <div class="cf-row"><b>Suggested fix:</b> ${c.fix}</div>
+      <button class="btn btn-primary btn-sm" onclick="${c.fixFn}()">⚡ Fix automatically — ${c.fixLabel.toLowerCase()}</button>
+    </div>`).join('')+
+    passing.map(c=>`<div class="comp-item"><span class="cchk">✓</span>${c.name}</div>`).join('');
+  const ok=failing.length===0;
+  state.current.compliant=ok;
+  const banner=$('#ready-banner');
+  banner.className='ready-banner'+(ok?'':' warn');
+  banner.innerHTML=ok
+    ?`<div class="rb-ic">✅</div><div><b>READY</b><small>All ${checks.length} checks passed${state.current.auto?' · auto-optimized for '+plats.join(', '):''}. Compliant with Meta, TikTok, X, YouTube &amp; LinkedIn policies and your brand rules.</small></div>`
+    :`<div class="rb-ic">⚠️</div><div><b>REVIEW REQUIRED</b><small>${failing.length} issue${failing.length>1?'s':''} to resolve before this content can be approved.</small></div>
+      ${failing.length>1?'<button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="fixAll()">⚡ Fix all automatically</button>':''}`;
+  if(!state.current.approved){
+    $('#btn-approve').disabled=!ok;
+    $('#btn-approve').textContent='✓ Approve Content';
+    $('#approve-hint').innerHTML=ok
+      ?'Status: <b style="color:var(--draft)">Draft</b> — approve to unlock scheduling.'
+      :'Status: <b style="color:var(--draft)">Review Required</b> — resolve compliance issues to approve.';
+  }
+  if(manual)toast(ok?'Content check passed — READY':'Content check found '+failing.length+' issue'+(failing.length>1?'s':''),!ok);
+}
+/* auto-fix actions */
+function fixDisclaimer(){
+  const el=$('#caption-body'); const t=el.innerText.trim();
+  const zh=state.lang==='zh';
+  const needsAge=!/(18\s*\+|18岁)/.test(t), needsRG=!/(play responsibly|理性游戏)/i.test(t);
+  el.textContent=t+'\n\n'+((needsAge?(zh?'仅限18岁以上。':'18+ only. '):'')+(needsRG?(zh?'请理性游戏。':'Play responsibly.'):'')).trim();
+  renderCompliance(); toast('Disclaimer added to caption');
+}
+function fixRestricted(){
+  const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const el=$('#caption-body'); let t=el.innerText;
+  for(const[k,v] of Object.entries(SAFE_SWAPS))t=t.replace(new RegExp(esc(k),'gi'),v);
+  el.textContent=t;
+  let c=$('#cta-body').textContent;
+  for(const[k,v] of Object.entries(SAFE_SWAPS))c=c.replace(new RegExp(esc(k),'gi'),v);
+  $('#cta-body').textContent=c;
+  renderCompliance(); toast('Restricted wording replaced with compliant phrasing');
+}
+function fixPoster(){regenComponent('photo')}
+function fixCapLen(){
+  $('#caption-body').textContent=(state.lang==='zh'?SHORT_CAPTION_ZH:SHORT_CAPTION)(GAMES[state.current.game]);
+  renderCompliance(); toast('Caption shortened for the strictest platform');
+}
+function fixTags(){
+  const lim=Math.min(...state.current.plats.map(p=>PLATFORM_RULES[p].tags));
+  const tags=[...document.querySelectorAll('#tag-cloud .htag')].map(t=>t.textContent).slice(0,lim);
+  $('#tag-cloud').innerHTML=tags.map(h=>`<span class="htag">${h}</span>`).join('');
+  renderCompliance(); toast('Hashtags trimmed to the platform limit');
+}
+function fixCTA(){$('#cta-body').textContent=state.lang==='zh'?'立即游玩 →':'Play Now →';renderCompliance();toast('CTA reset to an approved action')}
+function fixRemoveBanned(){
+  state.current.plats=state.current.plats.filter(p=>!PLATFORM_RULES[p].prohibited);
+  if(!state.current.plats.length)state.current.plats=['Facebook'];
+  state.plats=[...state.current.plats];
+  $$('#plat-grid .plat').forEach(b=>b.classList.toggle('selected',state.plats.includes(b.dataset.plat)));
+  $('#result-meta').textContent=`${GAMES[state.current.game].name} · ${state.current.purpose} · ${state.current.plats.join(' + ')}`;
+  renderCompliance(); toast('Non-compliant platform removed from this package');
+}
+function fixAll(){
+  let guard=0;
+  while(guard++<8){
+    const failing=runChecks().filter(c=>!c.pass);
+    if(!failing.length)break;
+    const fn=window[failing[0].fixFn];
+    if(typeof fn==='function')fn(); else break;
+  }
+  renderCompliance(); toast('All fixable issues resolved — re-checked');
+}
+$('#caption-body').addEventListener('blur',()=>{if(state.current)renderCompliance()});
+
+/* video sim */
+function togglePlay(){
+  if(state.playing){stopPlay();return}
+  state.playing=true; $('#btn-play').textContent='❚❚'; $('#btn-play').style.paddingLeft='0';
+  let s=parseFloat($('#vid-fill').style.width)/100*15||0;
+  if(s>=15)s=0;
+  state.playT=setInterval(()=>{
+    s+=.25; const pct=Math.min(100,s/15*100);
+    $('#vid-fill').style.width=pct+'%';
+    $('#vid-cur').textContent='0:'+String(Math.min(15,Math.floor(s))).padStart(2,'0');
+    if(s>=15)stopPlay();
+  },250);
+}
+function stopPlay(){state.playing=false;clearInterval(state.playT);$('#btn-play').textContent='▶';$('#btn-play').style.paddingLeft='5px'}
+
+/* revise */
+document.getElementById('revise-chips').addEventListener('click',e=>{
+  const c=e.target.closest('.chip'); if(!c)return;
+  $$('#revise-chips .chip').forEach(x=>x.classList.remove('selected'));
+  c.classList.add('selected');
+  $('#revise-input').value=c.dataset.rev+': ';
+  $('#revise-input').focus();
+});
+function focusRevise(scope){$('#revise-scope').value=scope;$('#revise-input').focus();$('#revise-input').scrollIntoView({behavior:'smooth',block:'center'})}
+function regenComponent(which){
+  const g=GAMES[state.game];
+  const zh=state.lang==='zh';
+  const pool=(g.corporate?['Company Event','Company News',"We're Hiring",'Partnership','Milestone']
+    :['New Game Announcement','Game Feature','Announcement','Game Tutorial','Feature Highlight','Social Media Engagement','Seasonal Content']);
+  if(which==='photo'){state.headIdx=(state.headIdx+1)%g.heads.length;buildPoster();toast('Photo regenerated with a new concept')}
+  else if(which==='video'){stopPlay();$('#vid-fill').style.width='0%';$('#vid-cur').textContent='0:00';toast('Video regenerated (demo)')}
+  else if(which==='caption'){const alts=pool.filter(k=>k!==state.purpose);const r=alts[Math.floor(Math.random()*alts.length)];$('#caption-body').textContent=((zh?CAPTIONS_ZH:CAPTIONS)[r])(g);toast('Caption rewritten')}
+  else if(which==='hashtags'){$('#tag-cloud').innerHTML=HASHTAGS(g,state.purpose).sort(()=>Math.random()-.5).map(h=>`<span class="htag">${h}</span>`).join('');toast('Hashtags refreshed')}
+  else{const set=zh?CTAS_ZH:CTAS;const vals=pool.map(p=>set[p]);$('#cta-body').textContent=vals[Math.floor(Math.random()*vals.length)];toast('CTA regenerated')}
+  if(state.current)renderCompliance();
+}
+function reviseContent(){
+  const scope=$('#revise-scope').value;
+  const note=$('#revise-input').value.trim();
+  if(!note){toast('Tell AI what to change first',true);return}
+  if(scope==='everything'){runGeneration(true)}
+  else{
+    const active=$$('#result-tabs .tab').find(t=>t.classList.contains('active'));
+    regenComponent(scope==='selected'?(active?active.dataset.tab:'photo'):scope);
+  }
+  $('#revise-input').value='';$('#rev-count').textContent='0/200';
+  $$('#revise-chips .chip').forEach(x=>x.classList.remove('selected'));
+}
+
+/* approve + schedule */
+function approveContent(){
+  if(!state.current)return;
+  if(!state.current.compliant){toast('Resolve the compliance issues in Content check before approving',true);return}
+  state.current.approved=true;
+  $('#btn-approve').textContent='✓ Approved'; $('#btn-approve').disabled=true;
+  $('#btn-addcal').disabled=false;
+  $('#approve-hint').innerHTML='Status: <b style="color:var(--posted)">Approved</b> — ready to schedule or post.';
+  toast('Content approved — Draft → Approved');
+}
+function saveToLibrary(){
+  if(!state.current){toast('Generate content first',true);return}
+  persistCurrent(state.current.approved?'pending':'draft',null,null);
+  toast('Saved to Content Library');
+}
+function persistCurrent(status,date,time){
+  const c=state.current; if(!c)return null;
+  if(c.saved){const it=CONTENT.find(x=>x.id===c.savedId);if(it){it.status=status;if(date)it.date=date;if(time)it.time=time;return it}}
+  const it={id:++NEXT_ID, game:c.game, type:c.type, purpose:c.purpose, plats:[...c.plats],
+    status, date:date||'2026-09-08', time:time||'10:00', created:'2026-09-08',
+    versions:c.approved?['Generated','Approved']:['Generated'], head:c.headIdx%3};
+  CONTENT.push(it); c.saved=true; c.savedId=it.id; return it;
+}
+function openScheduleModal(){
+  const g=GAMES[state.current.game];
+  $('#sch-content').value=`${g.name} – ${state.current.purpose}`;
+  $('#sch-plats').innerHTML=state.current.plats.map(p=>`<div class="ckrow on" data-p="${p}"><span class="ck">✓</span>${p}</div>`).join('');
+  $$('#sch-plats .ckrow').forEach(r=>r.addEventListener('click',()=>r.classList.toggle('on')));
+  $('#sch-date').value='2026-09-11';
+  openModal('modal-schedule');
+}
+function confirmSchedule(){
+  const date=$('#sch-date').value, time=$('#sch-time').value||'10:00', status=$('#sch-status').value;
+  const plats=$$('#sch-plats .ckrow.on').map(r=>r.dataset.p);
+  if(!date){toast('Pick a date first',true);return}
+  if(!plats.length){toast('Select at least one platform',true);return}
+  const it=persistCurrent(status,date,time);
+  it.plats=plats;
+  if(status==='sched'&&!it.versions.includes('Scheduled'))it.versions.push('Scheduled');
+  closeModal('modal-schedule');
+  toast(`Added to calendar — ${fmtDate(date)} at ${time}`);
+  go('calendar');
+}
+
+/* ================= CALENDAR ================= */
+const DOW=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+function calShift(dir){
+  const a=state.cal.anchor, v=state.cal.view;
+  if(v==='month')a.setMonth(a.getMonth()+dir);
+  else if(v==='week')a.setDate(a.getDate()+dir*7);
+  else a.setDate(a.getDate()+dir);
+  renderCalendar();
+}
+document.getElementById('view-switch').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  $$('#view-switch button').forEach(x=>x.classList.toggle('active',x===b));
+  state.cal.view=b.dataset.view; renderCalendar();
+});
+function filteredEvents(){
+  const fp=$('#f-plat').value, fg=$('#f-game').value, fs=$('#f-status').value;
+  return CONTENT.filter(c=>c.date&&
+    (!fp||c.plats.includes(fp))&&(!fg||c.game===fg)&&(!fs||c.status===fs));
+}
+function dstr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function cellHTML(d,other,tall,evs){
+  const ds=dstr(d);
+  const dayEvs=evs.filter(e=>e.date===ds);
+  const today=ds==='2026-09-08';
+  return `<div class="cal-cell ${other?'other':''} ${today?'today':''}" style="${tall?'min-height:220px':''}">
+    <div class="cd">${d.getDate()}</div>
+    ${dayEvs.map(e=>{
+      const g=GAMES[e.game], s=STATUS_META[e.status];
+      const pl=e.plats.map(p=>({Instagram:'IG',Facebook:'FB',YouTube:'YT',LinkedIn:'LI',TikTok:'TT'}[p]||p)).join('+');
+      return `<button class="cal-ev ${s[2]}" data-id="${e.id}" title="${g.name} — ${e.purpose}">
+        <span class="ev-th" style="background:${g.soft}">${e.type==='video'?'🎬':e.type==='photo'?'🖼':g.e}</span>
+        <span class="ev-tx"><b>${g.short} · ${pl}</b><small>${s[3]} ${s[0]}${e.time?' · '+e.time:''}</small></span>
+      </button>`;
+    }).join('')}
+  </div>`;
+}
+function renderCalendar(){
+  const monthEvents=CONTENT.filter(c=>c.date&&c.date.startsWith('2026-09'));
+  const posted=monthEvents.filter(c=>c.status==='posted').length;
+  const sched=monthEvents.filter(c=>c.status==='sched').length;
+  const draft=monthEvents.filter(c=>c.status==='draft'||c.status==='pending').length;
+  $('#cal-stats').innerHTML=`
+    <div class="stat" style="--sc:var(--blue)"><span class="s-ico">📦</span><div class="s-num">${monthEvents.length}</div><div class="s-lbl">Total Posts</div></div>
+    <div class="stat" style="--sc:var(--posted)"><span class="s-ico">🟢</span><div class="s-num">${posted}</div><div class="s-lbl">Posted</div></div>
+    <div class="stat" style="--sc:var(--sched)"><span class="s-ico">🔵</span><div class="s-num">${sched}</div><div class="s-lbl">Scheduled</div></div>
+    <div class="stat" style="--sc:var(--draft)"><span class="s-ico">🟡</span><div class="s-num">${draft}</div><div class="s-lbl">Draft / Pending</div></div>`;
+  const totalPlanned=posted+sched;
+  $('#prog-label').textContent=`${posted} / ${totalPlanned} scheduled posts published this month`;
+  $('#prog-fill').style.width=(totalPlanned?Math.round(posted/totalPlanned*100):0)+'%';
+
+  const a=state.cal.anchor, v=state.cal.view, evs=filteredEvents();
+  const grid=document.getElementById('cal-grid');
+  if(v==='month'){
+    $('#cal-title').textContent=a.toLocaleDateString(LOC(),{month:'long',year:'numeric'});
+    const first=new Date(a.getFullYear(),a.getMonth(),1);
+    const startOffset=(first.getDay()+6)%7;
+    const start=new Date(first); start.setDate(1-startOffset);
+    grid.style.gridTemplateColumns='repeat(7,1fr)';
+    let html=DOW.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+    for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);html+=cellHTML(d,d.getMonth()!==a.getMonth(),false,evs)}
+    grid.innerHTML=html;
+  }else if(v==='week'){
+    const monday=new Date(a); monday.setDate(a.getDate()-((a.getDay()+6)%7));
+    const sun=new Date(monday); sun.setDate(monday.getDate()+6);
+    $('#cal-title').textContent=monday.toLocaleDateString(LOC(),{month:'short',day:'numeric'})+' – '+sun.toLocaleDateString(LOC(),{month:'short',day:'numeric',year:'numeric'});
+    grid.style.gridTemplateColumns='repeat(7,1fr)';
+    let html=DOW.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+    for(let i=0;i<7;i++){const d=new Date(monday);d.setDate(monday.getDate()+i);html+=cellHTML(d,false,true,evs)}
+    grid.innerHTML=html;
+  }else{
+    $('#cal-title').textContent=a.toLocaleDateString(LOC(),{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    grid.style.gridTemplateColumns='1fr';
+    grid.innerHTML=`<div class="cal-dow">${a.toLocaleDateString(LOC(),{weekday:'long'})}</div>`+cellHTML(a,false,true,evs);
+  }
+  grid.querySelectorAll('.cal-ev').forEach(ev=>ev.addEventListener('click',()=>openEvent(+ev.dataset.id)));
+}
+
+/* event detail */
+function openEvent(id){
+  const it=CONTENT.find(c=>c.id===id); if(!it)return;
+  state.evOpen=id;
+  const g=GAMES[it.game], s=STATUS_META[it.status];
+  $('#ev-detail').innerHTML=`
+    <div style="display:flex;gap:14px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+      <div style="width:64px;height:64px;border-radius:16px;display:grid;place-items:center;font-size:30px;background:${g.grad};border:1px solid rgba(255,255,255,.2)">${g.e}</div>
+      <div><h3 style="margin-bottom:2px">${g.name}</h3>
+      <p style="color:var(--mut);font-size:13px">${it.purpose} · ${it.type==='package'?'Full package':it.type}</p></div>
+      <span class="badge ${s[1]}" style="margin-left:auto"><span class="dot"></span>${s[0]}</span>
+    </div>
+    <div class="result-box" style="margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12.5px">
+        <div><small style="color:var(--mut)">Platforms</small><br><b>${it.plats.join(' + ')}</b></div>
+        <div><small style="color:var(--mut)">${it.status==='posted'?'Posted':'Scheduled for'}</small><br><b>${fmtDate(it.date)} · ${it.time}</b></div>
+        <div><small style="color:var(--mut)">Created</small><br><b>${fmtDate(it.created)}</b></div>
+        <div><small style="color:var(--mut)">Attached</small><br><b>${it.type==='package'?'Photo · Video · Caption · Hashtags · CTA':it.type==='video'?'Video · Caption':'Photo · Caption'}</b></div>
+      </div>
+    </div>
+    <div class="result-box" style="margin-bottom:16px">
+      <small style="color:var(--mut);font-weight:600">Version history</small>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center">
+        ${it.versions.map((vv,i)=>`<span class="badge b-sched" style="font-weight:600">v${i+1} — ${vv}</span>`).join('<span style="color:var(--dim)">→</span>')}
+      </div>
+      ${it.link?`<div style="margin-top:10px;font-size:12px;color:var(--mut)">🔗 <span style="color:#79a6ff">${it.link}</span></div>`:''}
+    </div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap">
+      ${it.status==='sched'?`<button class="btn btn-approve" style="flex:1" onclick="openPostedModal()">✓ Mark as Posted</button>`:''}
+      ${(it.status==='draft'||it.status==='pending')?`<button class="btn btn-approve" style="flex:1" onclick="approveFromCal()">✓ Approve &amp; Schedule</button>`:''}
+      ${it.status==='failed'?`<button class="btn btn-primary" style="flex:1" onclick="retryFailed()">🔄 Retry Posting</button>`:''}
+      <button class="btn btn-ghost" onclick="toast('Opening in editor (demo)')">✏️ Edit</button>
+      <button class="btn btn-danger-ghost" onclick="removeEvent()">Remove</button>
+    </div>`;
+  openModal('modal-event');
+}
+function approveFromCal(){
+  const it=CONTENT.find(c=>c.id===state.evOpen); if(!it)return;
+  it.status='sched'; if(!it.versions.includes('Approved'))it.versions.push('Approved');
+  closeModal('modal-event'); renderCalendar(); renderLibrary(); toast('Approved — now Scheduled');
+}
+function retryFailed(){
+  const it=CONTENT.find(c=>c.id===state.evOpen); if(!it)return;
+  it.status='sched'; closeModal('modal-event'); renderCalendar(); toast('Re-queued for posting');
+}
+function removeEvent(){
+  const i=CONTENT.findIndex(c=>c.id===state.evOpen);
+  if(i>-1)CONTENT.splice(i,1);
+  closeModal('modal-event'); renderCalendar(); renderLibrary(); toast('Removed');
+}
+function openPostedModal(){
+  const it=CONTENT.find(c=>c.id===state.evOpen); if(!it)return;
+  const g=GAMES[it.game];
+  closeModal('modal-event');
+  $('#mp-sub').textContent=`${g.name} — ${it.purpose}`;
+  $('#mp-plat').value=it.plats.join(' + ');
+  $('#mp-date').value='2026-09-08'; $('#mp-time').value='10:03'; $('#mp-link').value='';
+  openModal('modal-posted');
+}
+function confirmPosted(){
+  const it=CONTENT.find(c=>c.id===state.evOpen); if(!it)return;
+  it.status='posted'; it.date=$('#mp-date').value||it.date; it.time=$('#mp-time').value||it.time;
+  it.link=$('#mp-link').value||it.link||'';
+  if(!it.versions.includes('Posted'))it.versions.push('Posted');
+  closeModal('modal-posted'); renderCalendar(); renderLibrary();
+  toast('Confirmed — 🔵 Scheduled → 🟢 Posted');
+}
+
+/* ================= AI PLANNER ================= */
+function openPlannerModal(){
+  $('#planner-form').style.display='block'; $('#planner-result').style.display='none';
+  openModal('modal-planner');
+}
+document.getElementById('pl-plats').addEventListener('click',e=>{const c=e.target.closest('.chip');if(c)c.classList.toggle('selected')});
+document.getElementById('pl-games').addEventListener('click',e=>{const c=e.target.closest('.chip');if(c)c.classList.toggle('selected')});
+let PLAN=[];
+function generatePlan(){
+  const days=+$('#pl-days').value, freq=+$('#pl-freq').value;
+  const plats=$$('#pl-plats .chip.selected').map(c=>c.textContent.trim());
+  const games=$$('#pl-games .chip.selected').map(c=>c.dataset.g);
+  if(!plats.length||!games.length){toast('Pick at least one platform and one game',true);return}
+  const purposes=['Game Feature','New Game Announcement','Announcement','Game Tutorial','Feature Highlight','Social Media Engagement','Seasonal Content'];
+  const total=Math.max(2,Math.round(days/7*freq));
+  PLAN=[];
+  const gap=Math.max(1,Math.floor(days/total));
+  for(let i=0;i<total;i++){
+    const d=new Date(2026,8,10); d.setDate(d.getDate()+i*gap+(i%2));
+    const type=i%3===1?'video':(i%3===2?'photo':'package');
+    const pl=[plats[i%plats.length]];
+    if(plats.length>1&&i%2===0)pl.push(plats[(i+1)%plats.length]);
+    PLAN.push({date:dstr(d), game:games[i%games.length], purpose:purposes[i%purposes.length], type, plats:[...new Set(pl)]});
+  }
+  $('#plan-list').innerHTML=PLAN.map(p=>{
+    const g=GAMES[p.game];
+    return `<div class="rule-item">
+      <span class="r-ic" style="font-size:18px">${p.type==='video'?'🎬':p.type==='photo'?'🖼':g.e}</span>
+      <div><b>${new Date(p.date+'T00:00').toLocaleDateString(LOC(),{month:'short',day:'numeric'})} — ${g.name}</b>
+      <small>${p.purpose} · ${p.type==='package'?'Full package':p.type} · ${p.plats.join(' + ')}</small></div>
+      <span style="margin-left:auto;display:flex;gap:4px">${platIcons(p.plats)}</span></div>`;
+  }).join('');
+  $('#planner-form').style.display='none'; $('#planner-result').style.display='block';
+}
+function backToPlannerForm(){$('#planner-form').style.display='block';$('#planner-result').style.display='none'}
+function approvePlan(){
+  PLAN.forEach(p=>CONTENT.push({id:++NEXT_ID, game:p.game, type:p.type, purpose:p.purpose, plats:p.plats,
+    status:'pending', date:p.date, time:'10:00', created:'2026-09-08', versions:['Planned'], head:0}));
+  closeModal('modal-planner'); renderCalendar(); renderLibrary();
+  toast(`Plan approved — ${PLAN.length} posts added as Pending Approval`);
+}
+
+/* ================= LIBRARY ================= */
+function renderLibrary(){
+  const q=($('#lib-search').value||'').toLowerCase();
+  const fg=$('#lib-game').value, fs=$('#lib-status').value;
+  const items=[...CONTENT].sort((a,b)=>b.created.localeCompare(a.created)||b.id-a.id).filter(it=>{
+    const g=GAMES[it.game];
+    return (!fg||it.game===fg)&&(!fs||it.status===fs)&&
+      (!q||(g.name+' '+it.purpose).toLowerCase().includes(q));
+  });
+  $('#lib-grid').innerHTML=items.length?items.map(it=>{
+    const g=GAMES[it.game], s=STATUS_META[it.status];
+    return `<div class="lib-card">
+      <div class="lib-thumb" style="background:${g.grad}">
+        <span style="filter:drop-shadow(0 8px 18px rgba(0,0,0,.4))">${it.type==='video'?'🎬':g.chars[it.head%g.chars.length]}</span>
+        <span class="lt-type">${it.type==='package'?'FULL PACKAGE':it.type.toUpperCase()}</span>
+        <span class="lt-status badge ${s[1]}" style="backdrop-filter:blur(3px)"><span class="dot"></span>${s[0]}</span>
+      </div>
+      <div class="lib-body">
+        <b>${g.name} — ${it.purpose}</b>
+        <div class="lb-meta">${platIcons(it.plats)}<span>· created ${fmtDate(it.created)}</span></div>
+        <div class="lb-meta" style="margin-top:3px"><span>${it.status==='posted'?'Posted':'Planned'}: ${fmtDate(it.date)} · ${it.time} · v${it.versions.length} (${it.versions[it.versions.length-1]})</span></div>
+        <div class="lib-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openEvent(${it.id})">View</button>
+          <button class="btn btn-ghost btn-sm" onclick="toast('Duplicated to a new draft')">Duplicate</button>
+          <button class="btn btn-ghost btn-sm" onclick="toast('Package downloaded (demo)')">⬇ Download</button>
+        </div>
+      </div>
+    </div>`;
+  }).join(''):'<p style="color:var(--mut);padding:30px 6px">No content matches these filters. Generate something new! ✨</p>';
+}
+
+/* ================= BRAND ASSETS ================= */
+function renderBrandAssets(){
+  const key=$('#ba-game').value, g=GAMES[key];
+  const cats=g.corporate?[
+    ['Logos','🏷',[[g.short,'Primary logo'],['G','Game Engine mark']]],
+    ['Team & People','👥',[['👥','Team photo'],['🧑‍💼','Leadership'],['🤝','Partners'],['🎓','New hires']]],
+    ['Event visuals','🎪',[['🎪','Event stage'],['🏢','Office'],['📸','Event photos'],['🎤','Talks & panels']]],
+    ['Corporate elements','💼',[['🏆','Awards'],['🎗','Badge'],['📊','Infographic kit'],['💙','Brand pattern']]]
+  ]:[
+    ['Logos','🏷',[[g.short,'Primary logo'],['G','Game Engine mark']]],
+    ['Characters','🧸',g.chars.map((c,i)=>[c,'Character '+(i+1)])],
+    ['Backgrounds','🌄',[[g.orn[0],'Key art BG'],[g.orn[1],'Pattern BG'],['🌌','Night BG'],['✨','Glow BG']]],
+    ['Game symbols','🎰',g.assets.slice(0,4)],
+    ['Brand elements','💠',[['🪙','Coin set'],['⭐','Star burst'],['🏆','Win badge'],['🎁','Bonus chest']]]
+  ];
+  $('#ba-content').innerHTML=cats.map(([title,ico,items])=>`
+    <div class="ba-section">
+      <div class="section-title"><div class="ico">${ico}</div><h3>${title}<small>${items.length} approved · used automatically in generation</small></h3></div>
+      <div class="ba-grid">
+        ${items.map(([vis,lbl])=>`<div class="ba-tile">
+          <div class="ba-vis" style="background:${g.soft};border:1px solid var(--line);${(vis===g.short||vis==='G')?"font-family:'Space Grotesk';font-weight:800;font-size:19px":''}">${vis}</div>
+          <b>${lbl}</b><small>Approved ✓</small>
+        </div>`).join('')}
+        <button class="ba-tile" style="border-style:dashed;cursor:pointer" onclick="toast('Upload dialog would open here (demo)')">
+          <div class="ba-vis" style="border:1.5px dashed #2a3a5e;color:var(--mut)">＋</div><b style="color:var(--mut)">Upload</b><small>&nbsp;</small>
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+/* ================= TEMPLATES ================= */
+const TEMPLATES=[
+  ['New Game Launch','🚀','Poster + reel + launch caption','banana'],
+  ['Feature Spotlight','⭐','Zoom in on one game mechanic','blazing'],
+  ['How to Play','🎯','3-step tutorial carousel','ginto'],
+  ['Winner Celebration','🏆','Big-win social proof post','lucky'],
+  ['Seasonal Event','🎉','Holiday-themed campaign kit','ocean'],
+  ['Community Question','💬','Engagement prompt for comments','bingo'],
+];
+document.getElementById('tpl-grid').innerHTML=TEMPLATES.map(([name,e,desc,gk])=>{
+  const g=GAMES[gk];
+  return `<div class="tpl-card">
+    <div class="tpl-vis" style="background:${g.grad}"><span class="tv-e">${e}</span><span class="tv-t">${name}</span></div>
+    <div class="tpl-body"><div><b>${name}</b><small>${desc}</small></div>
+    <button class="btn btn-ghost btn-sm" onclick="go('generate');toast('Template applied — settings pre-filled')">Use</button></div>
+  </div>`;
+}).join('');
+
+/* ================= ANALYTICS top content ================= */
+(function renderTopContent(){
+  const top=[
+    ['banana','Banana Craze — New Game reel','Instagram','412K reach · 11.2% engagement','🎬'],
+    ['lucky','Lucky Color — Pick Your Color post','Facebook','298K reach · 8.9% engagement','🖼'],
+    ['blazing','Blazing 7s — Fire Feature teaser','TikTok','267K reach · 8.1% engagement','🎬'],
+  ];
+  document.getElementById('an-top').innerHTML=top.map(([gk,t,p,m,ic],i)=>{
+    const g=GAMES[gk];
+    return `<div class="recent-item">
+      <b style="color:var(--dim);font-family:'Space Grotesk';width:20px">${i+1}</b>
+      <div class="ri-th" style="background:${g.soft};border:1px solid var(--line)">${ic}</div>
+      <div><b>${t}</b><small>${p} · ${m}</small></div>
+      <span style="margin-left:auto;display:flex;gap:4px">${platIcons([p])}</span></div>`;
+  }).join('');
+})();
+
+/* ================= I18N — 中文 ================= */
+state.lang='en';
+const ZH=[
+/* nav & shell */
+['Home','首页'],['Generate New Content','生成新内容'],['Generate Content','生成内容'],['Content Calendar','内容日历'],['Content Library','内容库'],['Brand Assets','品牌素材'],['Templates','模板'],['Analytics','数据分析'],['Settings','设置'],['Create. Share. Grow.','创作。分享。成长。'],['— Faster.','—— 更快。'],
+/* dashboard */
+['Create ready-to-post content with one click. AI generates your visual, video, caption, hashtags, and CTA automatically.','一键创建可直接发布的内容。AI 自动生成视觉、视频、文案、话题标签和 CTA。'],
+['Generate new content','生成新内容'],
+['Pick a game, choose what to create, and let AI handle the concept, visuals, copy, and compliance — end to end.','选择游戏、选好创建类型，其余交给 AI —— 从概念、视觉、文案到合规，一站式完成。'],
+['Select game or subject','选择游戏或主题'],['Selecting approved assets','选择已批准素材'],['Select at least one platform first','请先选择至少一个平台'],['Select at least one platform','请选择至少一个平台'],['Select','选择'],['Generated Content','生成的内容'],['Generate Content Plan','生成内容计划'],['Generate content first','请先生成内容'],['Generate','生成'],['Review Required','需要审核'],['Review','审核'],['Approve Content','批准内容'],['Approve & Schedule','批准并排期'],['Approve Plan','批准计划'],['Approved — now Scheduled','已批准 —— 现已排期'],['Approved','已批准'],['Approve','批准'],['Scheduled for','排期时间'],['Scheduled','已排期'],['Schedule','排期'],['Posting progress','发布进度'],['Posting frequency','发布频率'],['Posted date','发布日期'],['Posted time','发布时间'],['Post link','帖子链接'],['Total Posts','帖子总数'],['Mark as Posted','标记为已发布'],['Confirm Posted','确认已发布'],['Not Posted','未发布'],['Not connected','未连接'],['Posted','已发布'],['Post','发布'],['Track','跟踪'],
+['Total Content','内容总数'],['Drafts','草稿箱'],['Needs Attention','需要关注'],
+['Recent content','最近内容'],['Latest packages generated by the studio','工作室最新生成的内容包'],['Coming up','即将发布'],['Next scheduled posts','接下来的排期帖子'],['Open content calendar','打开内容日历'],
+['Full Package','完整套餐'],['Full package','完整套餐'],['FULL PACKAGE','完整套餐'],[' · created ',' · 创建于 '],
+['Nothing scheduled yet — generate content and add it to your calendar.','暂无排期 —— 快生成内容并添加到日历吧。'],
+/* generate page */
+['Turn your ideas into ready-to-post content. Choose a game, pick what you need, and click Generate — AI does the rest.','将想法变成可直接发布的内容。选择游戏、选好所需，点击生成 —— 剩下的交给 AI。'],
+['What do you want to create?','你想创建什么？'],['Choose the type of content you need.','选择你需要的内容类型。'],
+['Social media poster or image','社交媒体海报或图片'],['Short video or reel','短视频'],
+['Photo + video + caption + hashtags + CTA','图片+视频+文案+话题标签+CTA'],
+['RECOMMENDED','推荐'],['PHOTO','图片'],['VIDEO','视频'],['Photo','图片'],['Video','视频'],
+['Approved logos, characters, assets, and brand rules load automatically.','自动加载已批准的标志、角色、素材和品牌规则。'],
+['Loaded for ','已加载：'],
+[': logo, 3 characters, 4 backgrounds, game symbols, brand rules, and content restrictions.','：标志、3个角色、4张背景、游戏符号、品牌规则及内容限制。'],
+[': corporate logo, team & event photos, awards, brand guidelines, and tone-of-voice rules.','：企业标志、团队与活动照片、奖项、品牌指南及语气规范。'],
+['Content purpose','内容目的'],['What is this content for?','这条内容的用途是什么？'],
+['New Game Announcement','新游戏发布'],['Game Feature','游戏功能'],['Game Tutorial','游戏教程'],['Feature Highlight','功能亮点'],['Social Media Engagement','社媒互动'],['Seasonal Content','节日内容'],['Seasonal','节日'],['Engagement','互动'],['Custom','自定义'],['Announcement','公告'],
+['Company Event','公司活动'],['Company News','公司新闻'],["We're Hiring",'招聘中'],['Partnership','合作伙伴'],['Milestone','里程碑'],['Company & Events (Game Engine)','公司与活动（Game Engine）'],['Company & Events','公司与活动'],
+['Platforms','平台'],['(select one or more)','（可多选）'],['Content is optimized for every platform you pick.','内容将针对你选择的每个平台进行优化。'],
+['Auto Optimize','自动优化'],
+['Automatically adjusts image dimensions, video aspect ratio & duration, caption length & tone, hashtags, and CTA for each selected platform.','自动为每个所选平台调整图片尺寸、视频比例与时长、文案长度与语气、话题标签及 CTA。'],
+['Asset control','素材控制'],['Decide which visuals AI is allowed to use.','决定 AI 可以使用哪些视觉素材。'],
+['AI Generated Assets','AI 生成素材'],['AI may create additional visual elements to enrich the design.','AI 可创建额外视觉元素来丰富设计。'],
+['Use My Assets Only','仅用我的素材'],['AI must only use the approved assets selected below.','AI 只能使用下方选中的已批准素材。'],
+['Only the selected assets will be used in your generated content. Brand rules and required disclaimers are applied automatically.','生成内容仅使用选中的素材。品牌规则和必需声明将自动应用。'],
+['Upload Asset','上传素材'],['Upload','上传'],
+['Your content package will appear here','你的内容包将显示在这里'],
+['One click generates your poster, video, caption, hashtags, and CTA — checked against brand rules before you ever see it.','一键生成海报、视频、文案、话题标签和 CTA —— 呈现之前已通过品牌规则检查。'],
+/* results */
+['Download all','全部下载'],['Download','下载'],['Regenerate','重新生成'],
+['Revise your content','修改你的内容'],["Not quite what you're looking for? Tell AI what to change.",'不太满意？告诉 AI 需要修改什么。'],
+['Revise selected tab only','仅修改当前标签'],['Revise photo','修改图片'],['Revise video','修改视频'],['Revise caption','修改文案'],['Revise everything','全部重新生成'],['Revised','已修改'],['Revise','修改'],
+['Caption is editable — click the text to refine it. Tone and length auto-adjust per platform when Auto Optimize is on.','文案可编辑 —— 点击文字即可修改。开启自动优化后，语气和长度会按平台自动调整。'],
+['Adjusted per platform — becomes "Link in bio 🎮" on Instagram.','按平台调整 —— 在 Instagram 上显示为"主页链接 🎮"。'],
+['Links to the game page on every platform.','在所有平台均链接到游戏页面。'],
+['Call to Action','行动号召（CTA）'],['Hashtags','话题标签'],['Caption','文案'],
+/* compliance */
+['Validated against Meta, TikTok, X, YouTube & LinkedIn policies + your brand rules','按 Meta、TikTok、X、YouTube 和 LinkedIn 政策及你的品牌规则验证'],
+['Content check passed — READY','内容检查通过 —— 已就绪'],['Content check found ','内容检查发现 '],['Content check','内容检查'],['Re-run check','重新检查'],
+['READY','已就绪'],['REVIEW REQUIRED','需要审核'],
+[' checks passed',' 项检查全部通过'],[' · auto-optimized for ',' · 已自动优化：'],
+['Compliant with Meta, TikTok, X, YouTube & LinkedIn policies and your brand rules.','符合 Meta、TikTok、X、YouTube 和 LinkedIn 政策及你的品牌规则。'],
+[' issues to resolve before this content can be approved.',' 个问题需解决后方可批准。'],
+[' issue to resolve before this content can be approved.',' 个问题需解决后方可批准。'],
+['Fix all automatically','一键全部修复'],['Fix automatically — ','自动修复 —— '],
+['Problem:','问题：'],['Reason:','原因：'],['Suggested fix:','建议修复：'],
+['Platform eligibility — corporate content (all platforms OK, incl. LinkedIn)','平台合规 —— 企业内容（所有平台均可，含 LinkedIn）'],
+['Platform eligibility','平台合规'],['Age gate (18+)','年龄门槛（18+）'],['Responsible-gaming disclaimer','理性游戏声明'],['Restricted wording','受限用语'],['Creative wording (on-image)','画面文字审查'],['Caption length','文案长度'],['Hashtag limit','话题标签上限'],['CTA compliance','CTA 合规'],['No appeal to minors (characters reviewed)','不吸引未成年人（角色已审查）'],['Approved assets & logo only','仅使用已批准素材与标志'],['No real-currency imagery','无真实货币图像'],['Image dimensions','图片尺寸'],['Video specs','视频规格'],[' — auto per platform','（按平台自动）'],['No gambling promotion in corporate post','企业帖子不含博彩推广'],
+['Caption does not include the "18+" age gate.','文案未包含"18+"年龄门槛。'],
+['Meta and TikTok require an explicit 18+ age gate on social casino content.','Meta 和 TikTok 要求社交博彩内容明确标注 18+。'],
+['Caption is missing the "Play responsibly." disclaimer.','文案缺少"请理性游戏"声明。'],
+['Your content rules and Meta responsible-gaming guidance require it on all promotional content.','你的内容规则及 Meta 理性游戏指南要求所有推广内容包含该声明。'],
+['Append "18+ only." to the caption.','在文案末尾添加"仅限18岁以上"。'],
+['Append "Play responsibly." to the caption.','在文案末尾添加"请理性游戏"。'],
+['Found restricted terms: ','发现受限用语：'],['Found restricted term: ','发现受限用语：'],
+['Meta, TikTok and X policies prohibit implying guaranteed winnings or financial return.','Meta、TikTok 和 X 政策禁止暗示保证赢利或经济回报。'],
+['Replace with approved, fun-focused phrasing.','替换为已批准、以乐趣为核心的表述。'],
+[' does not allow promotion of gambling or games of chance.',' 不允许推广博彩或机会游戏。'],
+['LinkedIn: promotion of gambling / games of chance is prohibited by ads policy','LinkedIn：广告政策禁止推广博彩/机会游戏'],
+[' and publish to the compliant platforms only.','，并仅发布到合规平台。'],
+[' characters — over the ',' 个字符 —— 超过 '],[' limit of ',' 的上限 '],
+['Shorten the caption while keeping the age gate and disclaimer.','缩短文案，同时保留年龄门槛和声明。'],
+[' hashtags — ',' 个话题标签 —— '],[' allows at most ',' 最多允许 '],
+['Keep only the ','仅保留 '],[' most relevant hashtags.',' 个最相关的话题标签。'],
+[" doesn't use an approved action verb (",' 未使用已批准的行动动词（'],
+['Your CTA rules allow one CTA per post, starting with an approved verb.','CTA 规则：每帖仅一个 CTA，且以已批准动词开头。'],
+['Reset the CTA to "Play Now →".','将 CTA 重置为"立即游玩 →"。'],
+['Corporate post contains game-promotion wording.','企业帖子包含游戏推广用语。'],
+['Corporate content posted to LinkedIn must not promote games of chance.','发布到 LinkedIn 的企业内容不得推广机会游戏。'],
+['Keep this post about the company; create a separate game post for other platforms.','保持本帖聚焦公司；针对其他平台单独创建游戏帖子。'],
+['add age gate','添加年龄门槛'],['add disclaimer','添加声明'],['reword automatically','自动改写'],['new concept','更换概念'],['shorten caption','缩短文案'],['trim hashtags','精简话题标签'],['reset cta','重置 CTA'],['remove linkedin','移除 LinkedIn'],
+[' · caption ≤',' · 文案 ≤'],[' tags',' 个标签'],['ads prohibited','广告禁投'],['thumbnail','缩略图'],
+['Meta: 18+ audience & responsible-gaming messaging required for social casino content','Meta：社交博彩内容需 18+ 受众及理性游戏提示'],
+['Meta: 18+ audience · max 30 hashtags · RG messaging · "Link in bio" CTA','Meta：18+ 受众 · 最多30个标签 · 理性游戏提示 · "主页链接" CTA'],
+['TikTok: gambling-style content 18+ only · must not appeal to minors','TikTok：博彩类内容仅限18+ · 不得吸引未成年人'],
+['X: caption ≤280 chars · ≤4 hashtags · gambling promos need country certification','X：文案≤280字符 · ≤4个标签 · 博彩推广需国家/地区认证'],
+['YouTube: age-restrict gambling-adjacent content · honest thumbnails, no clickbait claims','YouTube：博彩相关内容需年龄限制 · 缩略图须真实，不得夸大'],
+/* revise chips */
+['Change Style','更换风格'],['Change Theme','更换主题'],['More Professional','更专业'],['More Eye-Catching','更吸睛'],['Make Simpler','更简洁'],['Reduce Text','减少文字'],['Change Background','更换背景'],['Change Caption','修改文案'],['Try Another Concept','尝试新概念'],
+/* approve row */
+['Add to Calendar','添加到日历'],['Status:','状态：'],
+['— approve to unlock scheduling.','—— 批准后即可排期。'],['— resolve compliance issues to approve.','—— 解决合规问题后方可批准。'],['— ready to schedule or post.','—— 可以排期或发布。'],
+/* generation overlay */
+['Creating your content…','正在创建你的内容…'],
+['Understanding campaign','理解营销活动'],['Creating visual concept','创建视觉概念'],['Generating photo','生成图片'],['Generating video','生成视频'],['Writing caption','撰写文案'],['Creating hashtags','创建话题标签'],['Creating CTA','创建 CTA'],['Running compliance check','运行合规检查'],['Finalizing content','完成内容'],
+/* calendar */
+["Track what's generated, scheduled, and already posted — across every platform.",'跟踪各平台内容的生成、排期与发布状态。'],
+['AI Plan My Content','AI 内容规划'],['Draft / Pending','草稿/待审批'],
+[' scheduled posts published this month',' 条排期帖子本月已发布'],
+['Month','月'],['Week','周'],['Day','日'],
+['All platforms','全部平台'],['All games','全部游戏'],['All statuses','全部状态'],['Pending Approval','待审批'],['Failed','失败'],
+['Mon','周一'],['Tue','周二'],['Wed','周三'],['Thu','周四'],['Fri','周五'],['Sat','周六'],['Sun','周日'],
+['Created','创建时间'],['Attached','附带内容'],['Version history','版本历史'],
+['Photo · Video · Caption · Hashtags · CTA','图片 · 视频 · 文案 · 话题标签 · CTA'],['Video · Caption','视频 · 文案'],['Photo · Caption','图片 · 文案'],
+['Retry Posting','重试发布'],['Removed','已移除'],['Remove ','移除 '],['Remove','移除'],['Generated','已生成'],['Planned','已规划'],['Draft','草稿'],
+/* modals */
+['The generated photo, video, caption, hashtags, and CTA are attached to this event automatically.','生成的图片、视频、文案、话题标签和 CTA 会自动附加到该日程。'],
+['— not scheduled yet','—— 暂不排期'],
+['Confirm this content went live so the calendar and history stay accurate.','确认内容已发布，让日历和历史记录保持准确。'],
+['Similar Content Detected','检测到相似内容'],
+["To keep your feed fresh, here's what was recently posted with the same game and purpose:",'为保持内容新鲜，以下是近期发布的同游戏、同目的内容：'],
+['Use a Different Concept','使用不同概念'],['Create Anyway','仍然创建'],['Cancel','取消'],
+['Tell AI your campaign shape — it proposes a full posting calendar you can approve or edit.','告诉 AI 你的活动安排 —— 它会生成完整的发布日历，供你批准或编辑。'],
+['Campaign duration','活动周期'],['14 days','14 天'],['30 days','30 天'],['60 days','60 天'],
+['1 post / week','每周 1 帖'],['2 posts / week','每周 2 帖'],['3 posts / week','每周 3 帖'],['5 posts / week','每周 5 帖'],
+['Games to feature','主打游戏'],['Games','游戏'],['Company','公司'],
+['Content','内容'],['Date','日期'],['Time','时间'],['Status','状态'],
+/* library */
+['Every generated package is saved here automatically, with full version history.','每个生成的内容包都会自动保存，并附完整版本历史。'],
+['No content matches these filters. Generate something new! ✨','没有符合筛选条件的内容。快去生成新内容吧！✨'],
+['View','查看'],['Duplicated to a new draft','已复制为新草稿'],['Duplicate','复制'],
+/* brand assets */
+['Approved logos, characters, backgrounds, and brand elements for every game. Upload once — AI reuses them everywhere.','每个游戏的已批准标志、角色、背景与品牌元素。上传一次 —— AI 处处复用。'],
+[' approved · used automatically in generation',' 项已批准 · 生成时自动使用'],
+['Approved ✓','已批准 ✓'],['Primary logo','主标志'],['Game Engine mark','Game Engine 标志'],
+['Characters','角色'],['Character 1','角色 1'],['Character 2','角色 2'],['Character 3','角色 3'],
+['Backgrounds','背景'],['Key art BG','主视觉背景'],['Pattern BG','图案背景'],['Night BG','夜景背景'],['Glow BG','光效背景'],
+['Game symbols','游戏符号'],['Brand elements','品牌元素'],['Logos','标志'],
+['Coin set','金币组'],['Star burst','星光'],['Win badge','胜利徽章'],['Bonus chest','奖励宝箱'],
+['Team & People','团队与人物'],['Team photo','团队合照'],['Leadership','管理层'],['Partners','合作伙伴'],['New hires','新成员'],
+['Event visuals','活动视觉'],['Event stage','活动舞台'],['Office','办公室'],['Event photos','活动照片'],['Talks & panels','演讲与论坛'],
+['Corporate elements','企业元素'],['Awards','奖项'],['Badge','徽章'],['Infographic kit','信息图套件'],['Brand pattern','品牌图案'],
+/* templates */
+["Proven layouts for common campaign types. Pick one and AI fills it with your game's assets and copy.",'常见活动类型的成熟版式。选择一个，AI 会用你的游戏素材和文案填充。'],
+['New Game Launch','新游发布'],['Feature Spotlight','功能聚焦'],['How to Play','玩法教学'],['Winner Celebration','胜利庆祝'],['Seasonal Event','节日活动'],['Community Question','社区互动'],
+['Poster + reel + launch caption','海报+短视频+发布文案'],['Zoom in on one game mechanic','聚焦一个游戏机制'],['3-step tutorial carousel','三步教学轮播'],['Big-win social proof post','大奖见证帖'],['Holiday-themed campaign kit','节日主题活动套件'],['Engagement prompt for comments','评论区互动引导'],
+['Template applied — settings pre-filled','模板已应用 —— 设置已预填'],['Use','使用'],
+/* analytics */
+['How your generated content performs across platforms and games.','查看生成内容在各平台和游戏中的表现。'],
+['Last 30 days','最近30天'],['Last 90 days','最近90天'],['This year','今年'],
+['Content generated','已生成内容'],['Total reach','总触达'],['Avg. engagement rate','平均互动率'],
+['Platform distribution','平台分布'],['Posts published per platform, last 30 days','最近30天各平台发布数'],
+['Engagement by game','各游戏互动表现'],['Average engagement rate per game','各游戏平均互动率'],
+['Best-performing content','最佳表现内容'],['Top posts, last 30 days','最近30天热门帖子'],
+['Banana Craze reels on Instagram are your best-performing content type this month — 9.8% average engagement.','本月表现最佳的内容类型是 Instagram 上的 Banana Craze 短视频 —— 平均互动率 9.8%。'],
+[' reach · ',' 触达 · '],[' engagement',' 互动率'],
+/* settings */
+['Brand rules and generation rules applied automatically to every piece of content.','品牌规则与生成规则自动应用于每条内容。'],
+['Brand rules','品牌规则'],['Enforced during generation','生成时强制执行'],
+['Approved logos only','仅限已批准标志'],['Game Engine master logo + per-game logos, current versions','Game Engine 主标志及各游戏标志（最新版本）'],
+['Approved characters only','仅限已批准角色'],['Official character art — no AI-invented mascots','官方角色美术 —— 禁止 AI 自创吉祥物'],
+['Brand color palette','品牌色板'],["Each game's approved palette; neon accents allowed",'各游戏已批准色板；允许霓虹点缀'],
+['Approved fonts','已批准字体'],['Space Grotesk for display, Inter for body copy','标题用 Space Grotesk，正文用 Inter'],
+['Add brand rule','添加品牌规则'],
+['Content rules','内容规则'],['Compliance checks run before approval','批准前运行合规检查'],
+['Required disclaimer','必需声明'],['"18+ only. Play responsibly." on all promotional content','所有推广内容须含"仅限18岁以上，请理性游戏"'],
+['Restricted words','受限词汇'],['"guaranteed win", "free money", "risk-free" and 14 more','"保证中奖""免费领钱""零风险"等多项'],
+['Restricted visuals','受限视觉'],['No real currency imagery; no minors in any creative','禁止真实货币图像；创意中不得出现未成年人'],
+['CTA rules','CTA 规则'],['One CTA per post; approved verbs: Play, Spin, Join, Discover','每帖一个 CTA；批准动词：游玩、旋转、加入、探索'],
+['Add content rule','添加内容规则'],
+['Platform settings','平台设置'],['Connected accounts & format presets','已连接账号与格式预设'],
+['Connected','已连接'],
+['1080×1350 posters · 15–30s video · casual tone','1080×1350 海报 · 15–30秒视频 · 轻松语气'],
+['1080×1350 + Reels 9:16 · emoji-friendly · "Link in bio" CTA','1080×1350 + Reels 9:16 · 可用表情 · "主页链接" CTA'],
+['9:16 · 9–15s hook-first video · trending audio allowed','9:16 · 9–15秒开头抓人 · 可用热门音频'],
+['16:9 · captions ≤280 chars · max 4 hashtags · gambling promos need country certification','16:9 · 文案≤280字符 · 最多4个标签 · 博彩推广需国家/地区认证'],
+['Promotion of gambling / games of chance is prohibited by LinkedIn ads policy','LinkedIn 广告政策禁止推广博彩/机会游戏'],
+['AI settings','AI 设置'],['How the studio generates','工作室的生成方式'],
+['Auto compliance check','自动合规检查'],['Run the content check on every generation before showing results.','每次生成后先运行内容检查，再展示结果。'],
+['Duplicate content warning','重复内容提醒'],['Warn when similar content was posted to the same platform recently.','当同平台近期发布过相似内容时发出提醒。'],
+['Auto-save to library','自动保存到内容库'],['Every generated package is stored with version history.','每个生成的内容包都会保存并附版本历史。'],
+['Auto-publish scheduled posts','自动发布排期帖子'],['Post automatically at the scheduled time via connected accounts.','通过已连接账号在排期时间自动发布。'],
+['Default creative style','默认创意风格'],
+['Vibrant arcade — bold type, neon glow, high energy','活力街机 —— 粗体字、霓虹光效、高能量'],
+['Premium minimal — clean layouts, restrained color','高级极简 —— 干净版式、克制配色'],
+['Playful cartoon — character-led, rounded shapes','俏皮卡通 —— 角色主导、圆润造型'],
+/* toasts */
+['Saved to Content Library','已保存到内容库'],
+['Content approved — Draft → Approved','内容已批准 —— 草稿 → 已批准'],
+['Added to calendar — ','已添加到日历 —— '],
+['Disclaimer added to caption','声明已添加到文案'],
+['Restricted wording replaced with compliant phrasing','受限用语已替换为合规表述'],
+['Caption shortened for the strictest platform','已按最严平台缩短文案'],
+['Hashtags trimmed to the platform limit','话题标签已精简至平台上限'],
+['CTA reset to an approved action','CTA 已重置为批准动作'],
+['Non-compliant platform removed from this package','已移除不合规平台'],
+['All fixable issues resolved — re-checked','可修复问题已全部解决 —— 已重新检查'],
+['Resolve the compliance issues in Content check before approving','请先解决内容检查中的合规问题，再进行批准'],
+[' issues',' 个问题'],[' issue',' 个问题'],
+['Photo regenerated with a new concept','已用新概念重新生成图片'],
+['Caption rewritten','文案已重写'],['Hashtags refreshed','话题标签已刷新'],['CTA regenerated','CTA 已重新生成'],
+['Video regenerated (demo)','视频已重新生成（演示）'],
+['Poster downloaded (demo)','海报已下载（演示）'],['Video downloaded (demo)','视频已下载（演示）'],
+['Package downloaded as ZIP (demo)','内容包已打包下载（演示）'],['Package downloaded (demo)','内容包已下载（演示）'],
+['Opening editor (demo)','正在打开编辑器（演示）'],['Opening in editor (demo)','正在打开编辑器（演示）'],
+['Upload dialog would open here (demo)','此处将打开上传窗口（演示）'],
+['Re-queued for posting','已重新加入发布队列'],
+['Confirmed — 🔵 Scheduled → 🟢 Posted','已确认 —— 🔵 已排期 → 🟢 已发布'],
+['Pick a date first','请先选择日期'],
+['Tell AI what to change first','请先告诉 AI 需要修改什么'],
+['Pick at least one platform and one game','请至少选择一个平台和一个游戏'],
+[' posts added as Pending Approval',' 条帖子已添加为待审批'],['Plan approved — ','计划已批准 —— '],
+/* placeholders & attrs */
+['Search content…','搜索内容…'],
+['Paste the social media post URL','粘贴社交媒体帖子链接'],
+['Tell AI what you want to change… e.g. Make the design more premium, use less text, keep the original character, and make the colors more vibrant.','告诉 AI 你想修改什么… 例如：设计更高级、减少文字、保留原角色、颜色更鲜艳。'],
+['E.g. Create a fun and exciting post for our new game release, with a playful and energetic vibe.','例如：为新游戏发布创建一条有趣又充满活力的帖子。'],
+/* misc buttons */
+['Save the date','保存日期'],['Save','保存'],['Edit','编辑'],
+/* asset labels & edge fragments */
+['Event Photos','活动照片'],['Event Stage','活动舞台'],['Team','团队'],['Logo','标志'],
+['Monkey','猴子'],['Parrot','鹦鹉'],['Jungle BG','丛林背景'],['Coin','金币'],['Star','星星'],
+['Flame','火焰'],['Lucky 7','幸运7'],['Diamond','钻石'],['Neon BG','霓虹背景'],['Bolt','闪电'],
+['Gold Coin','金币'],['Crown','皇冠'],['Gold Bag','金袋'],['Vault BG','金库背景'],['Sparkle','闪光'],['Gem','宝石'],
+['Clover','四叶草'],['Rainbow','彩虹'],['Palette','调色盘'],['Aurora BG','极光背景'],['Wheel','转盘'],
+['Fish','小鱼'],['Octopus','章鱼'],['Trident','三叉戟'],['Reef BG','珊瑚背景'],['Shell','贝壳'],['Pearl','珍珠'],
+['Ball','宾果球'],['Daub','涂点'],['Confetti','彩带'],['Grid BG','网格背景'],['Card','卡片'],
+['All ','共 '],[' at ',' '],
+];
+const ZH_MAP=new Map(ZH);
+const ZH_SORTED=[...ZH].sort((a,b)=>b[0].length-a[0].length);
+const I18N_ORIG=new WeakMap(), I18N_ATTR=new WeakMap();
+let i18nObs=null;
+function zhText(s){
+  const m=s.match(/^(\s*)([\s\S]*?)(\s*)$/);
+  if(ZH_MAP.has(m[2]))return m[1]+ZH_MAP.get(m[2])+m[3];
+  let out=s;
+  for(const[en,zh] of ZH_SORTED){if(out.includes(en))out=out.split(en).join(zh)}
+  return out;
+}
+function i18nSkip(n){
+  const p=n.parentElement;
+  return p&&p.closest('#caption-body,#poster,#cta-body,#tag-cloud,script,style');
+}
+function translateTree(root){
+  if(root.nodeType===3){
+    if(!root.nodeValue||!root.nodeValue.trim()||i18nSkip(root))return;
+    if(!I18N_ORIG.has(root))I18N_ORIG.set(root,root.nodeValue);
+    const t=zhText(I18N_ORIG.get(root));
+    if(t!==root.nodeValue)root.nodeValue=t;
+    return;
+  }
+  if(root.nodeType!==1)return;
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null);
+  let n;
+  while(n=walker.nextNode()){
+    if(!n.nodeValue||!n.nodeValue.trim()||i18nSkip(n))continue;
+    if(!I18N_ORIG.has(n))I18N_ORIG.set(n,n.nodeValue);
+    const t=zhText(I18N_ORIG.get(n));
+    if(t!==n.nodeValue)n.nodeValue=t;
+  }
+  const attrEls=[root,...root.querySelectorAll('[placeholder],[title],[label],[aria-label]')];
+  attrEls.forEach(el=>{
+    if(el.nodeType!==1)return;
+    if(!I18N_ATTR.has(el))I18N_ATTR.set(el,{p:el.getAttribute&&el.getAttribute('placeholder'),t:el.getAttribute&&el.getAttribute('title'),l:el.getAttribute&&el.getAttribute('label'),a:el.getAttribute&&el.getAttribute('aria-label')});
+    const o=I18N_ATTR.get(el);
+    if(o.p)el.setAttribute('placeholder',zhText(o.p));
+    if(o.t)el.setAttribute('title',zhText(o.t));
+    if(o.l)el.setAttribute('label',zhText(o.l));
+    if(o.a)el.setAttribute('aria-label',zhText(o.a));
+  });
+}
+function restoreTree(root){
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null);
+  let n;
+  while(n=walker.nextNode()){if(I18N_ORIG.has(n))n.nodeValue=I18N_ORIG.get(n)}
+  root.querySelectorAll('[placeholder],[title],[label],[aria-label]').forEach(el=>{
+    const o=I18N_ATTR.get(el); if(!o)return;
+    if(o.p)el.setAttribute('placeholder',o.p);
+    if(o.t)el.setAttribute('title',o.t);
+    if(o.l)el.setAttribute('label',o.l);
+    if(o.a)el.setAttribute('aria-label',o.a);
+  });
+}
+function startI18nObs(){
+  if(i18nObs)return;
+  i18nObs=new MutationObserver(muts=>{
+    if(state.lang!=='zh')return;
+    i18nObs.disconnect();
+    muts.forEach(m=>{if(m.type==='childList')m.addedNodes.forEach(nd=>translateTree(nd))});
+    i18nObs.observe(document.body,{childList:true,subtree:true});
+  });
+  i18nObs.observe(document.body,{childList:true,subtree:true});
+}
+function stopI18nObs(){if(i18nObs){i18nObs.disconnect();i18nObs=null}}
+function setLang(l){
+  state.lang=l;
+  document.documentElement.lang=l==='zh'?'zh-CN':'en';
+  $('#lang-toggle').textContent=l==='zh'?'🌐 English':'🌐 中文';
+  if(l==='zh'){translateTree(document.body);startI18nObs()}
+  else{stopI18nObs();restoreTree(document.body)}
+  renderDashboard();renderCalendar();renderLibrary();renderBrandAssets();
+  if(state.current)renderCompliance();
+}
+
+/* ================= INIT ================= */
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')$$('.overlay.open').forEach(o=>o.classList.remove('open'));
+  if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('toggle-row')){e.preventDefault();e.target.click()}
+});
+renderDashboard(); renderCalendar(); renderLibrary(); renderBrandAssets();
+</script>
+</div>
+<div id="toast-wrap"></div>
+</body>
+</html>
