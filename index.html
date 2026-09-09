@@ -387,6 +387,9 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
 .ba-tile{position:relative}
 .ba-tile .del-x{top:7px;left:auto;right:7px}
 .fmt-badge{position:absolute;top:14px;right:14px;background:rgba(4,8,16,.6);border:1px solid rgba(255,255,255,.3);color:#fff;font-family:'Space Grotesk';font-weight:700;font-size:10.5px;letter-spacing:.1em;padding:4px 11px;border-radius:999px}
+.p-ai{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+.poster .fmt-badge{z-index:4}
+.poster.ai-loading::before{content:"✨ AI rendering…";position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(4,8,16,.75);border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 15px;border-radius:999px;font-size:12px;font-weight:600;z-index:6;animation:orbPulse 1.4s ease-in-out infinite}
 @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 .poster .p-head{
   font-family:'Space Grotesk';font-weight:700;font-size:34px;line-height:1.02;text-align:center;
@@ -1311,6 +1314,22 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
       <div class="hint-line"><span class="i">i</span>Publish app file: pick the newest index.html you downloaded and the app pushes it to GitHub for you — no GitHub website needed.</div>
       <div class="hint-line"><span class="i">i</span>Create a fine-grained token at github.com → Settings → Developer settings → Fine-grained tokens, limited to this repository with Contents read &amp; write. The token stays only in this browser — never share it.</div>
     </div>
+    <div class="card card-pad">
+      <div class="section-title"><div class="ico">🖌</div><h3>AI Image Generation<small>Real AI-designed posters</small></h3></div>
+      <div class="field"><label>Provider</label>
+        <select class="input" id="ai-provider" onchange="aiProviderChanged()">
+          <option value="gemini">Google Gemini (free tier)</option>
+          <option value="openai">OpenAI GPT Image 2</option>
+        </select>
+      </div>
+      <div class="field"><label id="ai-key-label">Gemini API key</label><input class="input" id="ai-key" type="password" placeholder="AIza…"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-primary btn-sm" onclick="aiApplyForm()">💾 Save key</button>
+        <small id="ai-status" style="color:var(--mut)"></small>
+      </div>
+      <div class="hint-line"><span class="i">i</span>Gemini: free key at aistudio.google.com → "Get API key". OpenAI: key (sk-…) from platform.openai.com. With a key set, Generate creates real AI-designed posters using your uploaded assets and logo. Without it, the quick template poster is used.</div>
+      <div class="hint-line"><span class="i">i</span>The key stays only in this browser — it is never uploaded to GitHub.</div>
+    </div>
   </div>
 </section>
 </main>
@@ -1778,7 +1797,7 @@ function selectedUploads(key){return (UPLOADS[key]||[]).filter(u=>u.sel)}
 /* company logo — embedded SVG recreation of the official GAME ENGINE logo.
    If a real logo.png file exists next to index.html it takes priority. */
 const LOGO_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 104" width="330" height="104"><defs><linearGradient id="gm" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#FFC93C"/><stop offset=".45" stop-color="#FF8A34"/><stop offset="1" stop-color="#FF5A4E"/></linearGradient></defs><g><rect x="30" y="8" width="13" height="13" rx="2" fill="#FF5A4E"/><rect x="14" y="15" width="9" height="9" rx="2" fill="#FFB020"/><rect x="45" y="20" width="10" height="10" rx="2" fill="#FF8A34"/><rect x="6" y="33" width="10" height="10" rx="2" fill="#FFC93C"/><rect x="24" y="30" width="14" height="14" rx="2" fill="#FF7030"/><rect x="42" y="46" width="8" height="8" rx="2" fill="#FFC93C"/><rect x="12" y="50" width="12" height="12" rx="2" fill="#FF8A34"/><rect x="30" y="58" width="10" height="10" rx="2" fill="#FF5A4E"/><rect x="5" y="66" width="8" height="8" rx="2" fill="#FF9C2E"/><rect x="22" y="74" width="12" height="12" rx="2" fill="#FFC93C"/><rect x="42" y="80" width="8" height="8" rx="2" fill="#FF6A3D"/><rect x="14" y="88" width="10" height="10" rx="2" fill="#FF8A34"/></g><text x="48" y="90" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="100" fill="url(#gm)" stroke="#FFFFFF" stroke-width="5" paint-order="stroke" font-style="italic">G</text><text x="152" y="48" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-style="italic" font-size="43" letter-spacing="1"><tspan fill="#EE3E23">G</tspan><tspan fill="#F6A818">A</tspan><tspan fill="#1D6FE8">M</tspan><tspan fill="#35A9F1">E</tspan></text><text x="152" y="94" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-style="italic" font-size="43" letter-spacing="1" fill="#FFFFFF">ENGINE</text></svg>`;
-const LOGO_DATA='data:image/svg+xml;utf8,'+encodeURIComponent(LOGO_SVG);
+const LOGO_DATA='data:image/png;base64,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';
 let LOGO_SRC=LOGO_DATA;
 function logoSrc(){return BRAND.logo||LOGO_SRC}
 function applyLogo(){
@@ -1890,6 +1909,14 @@ function buildPoster(){
   }
   const badge=t==='gif'?`<div class="fmt-badge">GIF ∞</div>`:t==='carousel'?`<div class="fmt-badge">SLIDE ${slide+1}/3</div>`:'';
   const poster=$('#poster');
+  const cc=$('#car-controls');
+  const showCC=()=>{if(t==='carousel'){cc.style.display='flex';$$('#car-dots .cdot').forEach((d,i)=>d.classList.toggle('on',i===slide))}else cc.style.display='none'};
+  if(state.aiPoster){
+    poster.style.background='#0a0f1c';
+    poster.innerHTML=`<img class="p-ai" src="${state.aiPoster}" alt="">${badge}`;
+    showCC();
+    return;
+  }
   poster.style.background=g.grad;
   poster.innerHTML=`
     <div class="p-shine"></div>
@@ -1903,24 +1930,21 @@ function buildPoster(){
     <div class="p-head">${head.replace('. ','.<br>')}</div>
     <div class="p-tag">${PURPOSE_TAG[state.purpose]||'GAME ENGINE'} · ${g.name.toUpperCase()}</div>
     <div class="p-cta">${(((state.lang==='zh'?CTAS_ZH:CTAS)[state.purpose])||'Play Now →').toUpperCase()}</div>`;
-  const cc=$('#car-controls');
-  if(t==='carousel'){
-    cc.style.display='flex';
-    $$('#car-dots .cdot').forEach((d,i)=>d.classList.toggle('on',i===slide));
-  }else cc.style.display='none';
+  showCC();
 }
 function carShift(d){state.carIdx=(state.carIdx+3+d)%3;buildPoster()}
 function applyVideoBg(){
   const g=GAMES[state.game];
-  const up=selectedUpload(state.game);
-  $('#vf-bg').style.background=up
-    ?`linear-gradient(rgba(6,10,19,.35),rgba(6,10,19,.55)),url('${up.dataUrl}') center/cover`
+  const src=state.aiPoster||((selectedUpload(state.game)||{}).dataUrl);
+  $('#vf-bg').style.background=src
+    ?`linear-gradient(rgba(6,10,19,.35),rgba(6,10,19,.55)),url('${src}') center/cover`
     :g.grad;
 }
 function showResults(){
   const g=GAMES[state.game];
   state.current={game:state.game,type:state.type,purpose:state.purpose,plats:[...state.plats],approved:false,saved:false,headIdx:state.headIdx};
   state.carIdx=0;
+  state.aiPoster=null;
   $('#result-empty').style.display='none';
   $('#result-wrap').style.display='block';
   $('#result-meta').textContent=`${g.name} · ${state.purpose} · ${state.plats.join(' + ')}`;
@@ -1935,6 +1959,7 @@ function showResults(){
   selectTab(showPhoto?'photo':'video');
   buildPoster();
   applyVideoBg();
+  kickAIPoster();
   $('#vid-label').textContent=`${g.name} — 15s reel · ${state.plats.includes('TikTok')||state.plats.includes('Instagram')?'9:16':'16:9'}`;
   stopPlay(); $('#vid-fill').style.width='0%'; $('#vid-cur').textContent='0:00';
   const auto=$('#auto-opt').classList.contains('on');
@@ -2158,6 +2183,14 @@ function drawImgFit(x,img,cx,cy,maxW,maxH){
 async function downloadPoster(){
   if(!state.current){toast('Generate content first',true);return}
   const c=state.current, g=GAMES[c.game], t=c.type;
+  if(state.aiPoster){
+    const a=document.createElement('a');
+    a.href=state.aiPoster;
+    a.download=`${g.name.replace(/[^\w]+/g,'-')}-${t}-ai.png`;
+    a.click();
+    toast('AI poster downloaded');
+    return;
+  }
   const W=1080,H=1350;
   const cv=document.createElement('canvas');cv.width=W;cv.height=H;
   const x=cv.getContext('2d');
@@ -2303,7 +2336,14 @@ function regenComponent(which){
   const zh=state.lang==='zh';
   const pool=(g.corporate?['Company Event','Company News',"We're Hiring",'Partnership','Milestone']
     :['New Game Announcement','Game Feature','Announcement','Game Tutorial','Feature Highlight','Social Media Engagement','Seasonal Content']);
-  if(which==='photo'){state.headIdx=(state.headIdx+1)%g.heads.length;buildPoster();toast('Photo regenerated with a new concept')}
+  if(which==='photo'){
+    state.headIdx=(state.headIdx+1)%g.heads.length;
+    if(aiReady()&&state.current&&state.current.type!=='video'){
+      toast('Generating a new AI concept…');
+      kickAIPoster();
+      state.aiPoster=null;buildPoster();
+    }else{buildPoster();toast('Photo regenerated with a new concept')}
+  }
   else if(which==='video'){stopPlay();$('#vid-fill').style.width='0%';$('#vid-cur').textContent='0:00';toast('Video regenerated (demo)')}
   else if(which==='caption'){const alts=pool.filter(k=>k!==state.purpose);const r=alts[Math.floor(Math.random()*alts.length)];$('#caption-body').textContent=((zh?CAPTIONS_ZH:CAPTIONS)[r])(g);toast('Caption rewritten')}
   else if(which==='hashtags'){$('#tag-cloud').innerHTML=HASHTAGS(g,state.purpose).sort(()=>Math.random()-.5).map(h=>`<span class="htag">${h}</span>`).join('');toast('Hashtags refreshed')}
@@ -2720,6 +2760,116 @@ document.getElementById('tpl-grid').innerHTML=TEMPLATES.map(([name,e,desc,gk])=>
   }).join('');
 })();
 
+/* ================= AI IMAGE GENERATION (Gemini / OpenAI) ================= */
+const AI={provider:'gemini',gkey:'',okey:''};
+function aiLoadCfg(){try{const d=JSON.parse(localStorage.getItem('aics_ai')||'{}');if(d.key&&!d.gkey)d.gkey=d.key;Object.assign(AI,d)}catch(err){}}
+function aiSaveCfg(){try{localStorage.setItem('aics_ai',JSON.stringify(AI))}catch(err){}}
+function aiReady(){return AI.provider==='openai'?!!AI.okey:!!AI.gkey}
+function setAiStatus(){const el=document.getElementById('ai-status');if(el)el.textContent=aiReady()?'✅ AI posters enabled':''}
+function aiProviderChanged(){
+  AI.provider=$('#ai-provider').value;
+  const lbl=document.getElementById('ai-key-label'), inp=$('#ai-key');
+  if(AI.provider==='openai'){lbl.textContent='OpenAI API key';inp.placeholder='sk-…';inp.value=AI.okey||''}
+  else{lbl.textContent='Gemini API key';inp.placeholder='AIza…';inp.value=AI.gkey||''}
+  aiSaveCfg(); setAiStatus();
+}
+function aiApplyForm(){
+  const v=$('#ai-key').value.trim();
+  if(AI.provider==='openai')AI.okey=v; else AI.gkey=v;
+  aiSaveCfg(); setAiStatus();
+  toast(v?'AI key saved — AI posters enabled':'AI key cleared');
+}
+function dataUrlToBlob(du){
+  const i=du.indexOf(',');
+  const mime=du.slice(5,du.indexOf(';'));
+  const bin=atob(du.slice(i+1));
+  const arr=new Uint8Array(bin.length);
+  for(let j=0;j<bin.length;j++)arr[j]=bin.charCodeAt(j);
+  return new Blob([arr],{type:mime});
+}
+function buildAIPrompt(){
+  const g=GAMES[state.game];
+  const zh=state.lang==='zh';
+  const head=g.heads[state.headIdx%g.heads.length];
+  const cta=(((zh?CTAS_ZH:CTAS)[state.purpose])||'Play Now →').replace(' →','');
+  const brief=(state.purpose==='Custom'&&$('#custom-brief').value.trim())?(' Creative brief: '+$('#custom-brief').value.trim()+'.'):'';
+  const corporate=!!g.corporate;
+  const ups=selectedUploads(state.game).slice(0,3);
+  return 'Design a premium social media poster, 4:5 vertical, for '+(corporate?'the game studio "Game Engine"':'the mobile game "'+g.name+'"')+'. '
+    +'Purpose: '+state.purpose+'.'+brief+' '
+    +'Style: vibrant playful 3D cartoon illustration, professional marketing quality like a top mobile-game ad, rich detailed background scene, glossy lighting, bold rounded typography with outlines. '
+    +'Layout: the "GAME ENGINE" brand logo at the top; a big stylized headline that reads exactly "'+head+'"; the mascot or character featured prominently; small feature badges near the bottom; a bright yellow rounded call-to-action button that reads exactly "'+cta+'". '
+    +(corporate?'':'Include a small "21+ | Play Responsibly." badge at the bottom. ')
+    +(ups.length?'Use the attached image(s) as the main character/asset artwork — keep them clearly recognizable in the design. ':'')
+    +(BRAND.logo?'The attached logo image is the official brand logo — place it at the top exactly as provided. ':'')
+    +'No watermarks. All text must be spelled exactly as given.';
+}
+async function geminiGenerate(prompt,ups){
+  const parts=[{text:prompt}];
+  if(BRAND.logo)parts.push({inline_data:{mime_type:BRAND.logo.slice(5,BRAND.logo.indexOf(';')),data:BRAND.logo.split(',')[1]}});
+  ups.forEach(u=>parts.push({inline_data:{mime_type:u.dataUrl.slice(5,u.dataUrl.indexOf(';')),data:u.dataUrl.split(',')[1]}}));
+  const body={contents:[{parts}],generationConfig:{responseModalities:['IMAGE'],imageConfig:{aspectRatio:'4:5'}}};
+  const models=['gemini-2.5-flash-image','gemini-2.5-flash-image-preview'];
+  for(const mdl of models){
+    try{
+      const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent?key='+encodeURIComponent(AI.gkey),{
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      if(!r.ok){state.aiErr=r.status;continue}
+      const d=await r.json();
+      const ps=(((d.candidates||[])[0]||{}).content||{}).parts||[];
+      const img=ps.find(x=>(x.inlineData&&x.inlineData.data)||(x.inline_data&&x.inline_data.data));
+      if(img){const id=img.inlineData||img.inline_data;return 'data:'+(id.mimeType||id.mime_type||'image/png')+';base64,'+id.data}
+    }catch(err){}
+  }
+  return null;
+}
+async function openaiGenerate(prompt,ups){
+  const models=['gpt-image-2','gpt-image-1'];
+  const withImgs=!!(ups.length||BRAND.logo);
+  for(const mdl of models){
+    try{
+      let r;
+      if(withImgs){
+        const fd=new FormData();
+        fd.append('model',mdl);fd.append('prompt',prompt);fd.append('size','1024x1536');
+        const blobs=[];
+        if(BRAND.logo)blobs.push(dataUrlToBlob(BRAND.logo));
+        ups.forEach(u=>blobs.push(dataUrlToBlob(u.dataUrl)));
+        blobs.slice(0,4).forEach((b,i)=>fd.append('image[]',b,'asset'+i+'.png'));
+        r=await fetch('https://api.openai.com/v1/images/edits',{method:'POST',headers:{'Authorization':'Bearer '+AI.okey},body:fd});
+      }else{
+        r=await fetch('https://api.openai.com/v1/images/generations',{method:'POST',
+          headers:{'Authorization':'Bearer '+AI.okey,'Content-Type':'application/json'},
+          body:JSON.stringify({model:mdl,prompt:prompt,size:'1024x1536',n:1})});
+      }
+      if(!r.ok){state.aiErr=r.status;continue}
+      const d=await r.json();
+      const b=(d.data&&d.data[0])||{};
+      if(b.b64_json)return 'data:image/png;base64,'+b.b64_json;
+      if(b.url)return b.url;
+    }catch(err){}
+  }
+  return null;
+}
+async function generateAIPoster(){
+  if(!aiReady())return null;
+  const prompt=buildAIPrompt();
+  const ups=selectedUploads(state.game).slice(0,3);
+  return AI.provider==='openai'?openaiGenerate(prompt,ups):geminiGenerate(prompt,ups);
+}
+function kickAIPoster(){
+  if(!aiReady()||!state.current||state.current.type==='video')return;
+  const cur=state.current;
+  state.aiPoster=null;
+  $('#poster').classList.add('ai-loading');
+  generateAIPoster().then(url=>{
+    if(state.current!==cur)return;
+    $('#poster').classList.remove('ai-loading');
+    if(url){state.aiPoster=url;buildPoster();applyVideoBg();toast('AI poster ready ✨')}
+    else toast('AI image failed — using template poster (check your AI key/quota)',true);
+  }).catch(()=>{$('#poster').classList.remove('ai-loading')});
+}
+
 /* ================= GITHUB SYNC — edits auto-publish to the live site ================= */
 const GH={repo:'',branch:'main',token:'',auto:true,last:0};
 function ghLoadCfg(){try{Object.assign(GH,JSON.parse(localStorage.getItem('aics_gh')||'{}'))}catch(err){}}
@@ -3120,6 +3270,18 @@ const ZH=[
 ['Publish failed — check repo name and token','发布失败 —— 请检查仓库名和令牌'],
 ['Publish failed — check repo/token','发布失败 —— 请检查仓库/令牌'],
 ['That does not look like the AI Content Studio index.html file','这个文件看起来不是 AI Content Studio 的 index.html'],
+['AI Image Generation','AI 图像生成'],['Real AI-designed posters','真正的 AI 设计海报'],
+['Provider','服务提供方'],['Google Gemini (free tier)','Google Gemini（免费额度）'],['OpenAI GPT Image 2','OpenAI GPT Image 2'],
+['Gemini API key','Gemini API 密钥'],['OpenAI API key','OpenAI API 密钥'],['Save key','保存密钥'],
+['Gemini: free key at aistudio.google.com → "Get API key". OpenAI: key (sk-…) from platform.openai.com. With a key set, Generate creates real AI-designed posters using your uploaded assets and logo. Without it, the quick template poster is used.','Gemini：在 aistudio.google.com → "Get API key" 免费获取。OpenAI：在 platform.openai.com 获取（sk-…）。设置后，生成时会用你上传的素材和 Logo 创建真正的 AI 设计海报；未设置则使用快速模板海报。'],
+['The key stays only in this browser — it is never uploaded to GitHub.','密钥只保存在此浏览器中 —— 不会上传到 GitHub。'],
+['AI key saved — AI posters enabled','AI 密钥已保存 —— AI 海报已启用'],
+['AI key cleared','AI 密钥已清除'],
+['AI posters enabled','AI 海报已启用'],
+['AI poster ready ✨','AI 海报已生成 ✨'],
+['AI image failed — using template poster (check your AI key/quota)','AI 图像生成失败 —— 已使用模板海报（请检查密钥/额度）'],
+['Generating a new AI concept…','正在生成新的 AI 概念…'],
+['AI poster downloaded','AI 海报已下载'],
 ['Create a fine-grained token at github.com → Settings → Developer settings → Fine-grained tokens, limited to this repository with Contents read & write. The token stays only in this browser — never share it.','请在 github.com → Settings → Developer settings → Fine-grained tokens 创建仅限此仓库、具有 Contents 读写权限的令牌。令牌只保存在此浏览器中 —— 请勿分享。'],
 ['All ','共 '],[' at ',' '],
 ];
@@ -3215,6 +3377,11 @@ $('#gh-branch').value=GH.branch||'main';
 $('#gh-token').value=GH.token||'';
 document.getElementById('gh-auto').classList.toggle('on',GH.auto!==false);
 if(GH.last)setGhStatus('✅ Last synced '+new Date(GH.last).toLocaleTimeString());
+aiLoadCfg();
+$('#ai-provider').value=AI.provider||'gemini';
+$('#ai-key').value=(AI.provider==='openai'?AI.okey:AI.gkey)||'';
+document.getElementById('ai-key-label').textContent=AI.provider==='openai'?'OpenAI API key':'Gemini API key';
+setAiStatus();
 loadRemoteState();
 </script>
 </div>
