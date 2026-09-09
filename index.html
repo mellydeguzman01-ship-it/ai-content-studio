@@ -1325,6 +1325,7 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
       <div class="field"><label id="ai-key-label">Gemini API key</label><input class="input" id="ai-key" type="password" placeholder="AIza…"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <button class="btn btn-primary btn-sm" onclick="aiApplyForm()">💾 Save key</button>
+        <button class="btn btn-ghost btn-sm" onclick="aiTestKey()">🧪 Test key</button>
         <button class="btn btn-outline btn-sm" onclick="copySetupLink()">🔗 Copy setup link for teammates</button>
         <small id="ai-status" style="color:var(--mut)"></small>
       </div>
@@ -2842,7 +2843,7 @@ async function geminiGenerate(prompt,ups){
     try{
       const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent?key='+encodeURIComponent(AI.gkey),{
         method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-      if(!r.ok){state.aiErr=r.status;continue}
+      if(!r.ok){state.aiErr=r.status;try{const de=await r.json();state.aiErrMsg=(de.error&&de.error.message)||''}catch(e2){}continue}
       const d=await r.json();
       const ps=(((d.candidates||[])[0]||{}).content||{}).parts||[];
       const img=ps.find(x=>(x.inlineData&&x.inlineData.data)||(x.inline_data&&x.inline_data.data));
@@ -2870,7 +2871,7 @@ async function openaiGenerate(prompt,ups){
           headers:{'Authorization':'Bearer '+AI.okey,'Content-Type':'application/json'},
           body:JSON.stringify({model:mdl,prompt:prompt,size:'1024x1536',n:1})});
       }
-      if(!r.ok){state.aiErr=r.status;continue}
+      if(!r.ok){state.aiErr=r.status;try{const de=await r.json();state.aiErrMsg=(de.error&&de.error.message)||''}catch(e2){}continue}
       const d=await r.json();
       const b=(d.data&&d.data[0])||{};
       if(b.b64_json)return 'data:image/png;base64,'+b.b64_json;
@@ -2885,16 +2886,61 @@ async function generateAIPoster(){
   const ups=selectedUploads(state.game).slice(0,3);
   return AI.provider==='openai'?openaiGenerate(prompt,ups):geminiGenerate(prompt,ups);
 }
+function aiErrHint(){
+  const s=state.aiErr, msg=state.aiErrMsg?(' · '+String(state.aiErrMsg).slice(0,140)):'';
+  if(AI.provider==='openai'){
+    if(s===401)return 'invalid ang OpenAI key — kunin ang tamang sk-… sa platform.openai.com'+msg;
+    if(s===403)return 'kailangan i-verify ang OpenAI organization para sa image API (platform.openai.com → Settings → Organization → Verify) — o lumipat sa Gemini'+msg;
+    if(s===429)return 'ubos/walang OpenAI API credits (hiwalay ito sa ChatGPT Plus) — magdagdag ng billing o lumipat sa libreng Gemini'+msg;
+    if(s===400)return 'na-reject ang request ng OpenAI'+msg;
+    if(!s)return 'hindi maabot ang OpenAI mula sa browser — subukan ang Gemini';
+  }else{
+    if(s===400||s===401||s===403)return 'invalid ang Gemini key — kunin sa aistudio.google.com'+msg;
+    if(s===429)return 'naubos ang libreng Gemini quota ngayong araw — maghintay o mag-billing'+msg;
+    if(!s)return 'hindi maabot ang Gemini mula sa browser';
+  }
+  return 'HTTP '+s+msg;
+}
+async function aiTestKey(){
+  aiApplyForm();
+  if(!aiReady()){toast('Set your AI key first',true);return}
+  setAiStatus(); const el=document.getElementById('ai-status'); if(el)el.textContent='⏳ Testing…';
+  try{
+    let r;
+    if(AI.provider==='openai'){
+      r=await fetch('https://api.openai.com/v1/models',{headers:{'Authorization':'Bearer '+AI.okey}});
+      if(r.ok){
+        const d=await r.json();
+        const ids=(d.data||[]).map(m=>m.id);
+        const has=ids.filter(x=>x.indexOf('gpt-image')===0);
+        if(has.length){if(el)el.textContent='✅ Key OK · available: '+has.join(', ');toast('OpenAI key OK — image model available: '+has.join(', '))}
+        else{if(el)el.textContent='⚠️ Key OK pero walang gpt-image access';toast('Key OK pero walang gpt-image model sa account mo — kailangan ng org verification o lumipat sa Gemini',true)}
+        return;
+      }
+    }else{
+      r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?key='+encodeURIComponent(AI.gkey));
+      if(r.ok){if(el)el.textContent='✅ Gemini key OK';toast('Gemini key OK — handa na ang AI posters');return}
+    }
+    state.aiErr=r.status;
+    try{const d=await r.json();state.aiErrMsg=(d.error&&d.error.message)||''}catch(e2){state.aiErrMsg=''}
+    if(el)el.textContent='❌ '+aiErrHint();
+    toast('Test failed: '+aiErrHint(),true);
+  }catch(err){
+    state.aiErr=0;state.aiErrMsg='';
+    if(el)el.textContent='❌ '+aiErrHint();
+    toast('Test failed: '+aiErrHint(),true);
+  }
+}
 function kickAIPoster(){
   if(!aiReady()||!state.current||state.current.type==='video')return;
   const cur=state.current;
-  state.aiPoster=null;
+  state.aiPoster=null;state.aiErr=null;state.aiErrMsg='';
   $('#poster').classList.add('ai-loading');
   generateAIPoster().then(url=>{
     if(state.current!==cur)return;
     $('#poster').classList.remove('ai-loading');
     if(url){state.aiPoster=url;buildPoster();applyVideoBg();toast('AI poster ready ✨')}
-    else toast('AI image failed — using template poster (check your AI key/quota)',true);
+    else toast('AI image failed — '+aiErrHint(),true);
   }).catch(()=>{$('#poster').classList.remove('ai-loading')});
 }
 
