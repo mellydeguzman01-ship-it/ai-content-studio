@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Content Studio — Game Engine</title>
+<link rel="icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -39,7 +40,10 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html{color-scheme:dark}
 body{
-  background:var(--bg);
+  background:
+    url('bg.png') center/cover no-repeat fixed,
+    url('bg.jpg') center/cover no-repeat fixed,
+    radial-gradient(140% 120% at 50% -10%, #0b1034 0%, #070b1e 42%, #04060f 100%) fixed;
   color:var(--text);
   font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
   font-size:14px;
@@ -49,10 +53,18 @@ body{
 }
 body::before{
   content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  backdrop-filter:blur(3px) saturate(.85);
+  -webkit-backdrop-filter:blur(3px) saturate(.85);
   background:
-    radial-gradient(900px 500px at 85% -10%, rgba(168,85,247,.10), transparent 60%),
-    radial-gradient(800px 500px at -10% 20%, rgba(79,140,255,.08), transparent 55%),
-    radial-gradient(700px 600px at 50% 115%, rgba(34,211,238,.05), transparent 60%);
+    linear-gradient(rgba(4,6,15,.55),rgba(4,6,15,.72)),
+    radial-gradient(1000px 620px at 88% -10%, rgba(124,58,237,.20), transparent 60%),
+    radial-gradient(900px 560px at -10% 28%, rgba(37,99,235,.15), transparent 55%),
+    radial-gradient(1300px 700px at 50% 118%, rgba(34,211,238,.09), transparent 65%),
+    radial-gradient(620px 420px at 72% 82%, rgba(79,140,255,.08), transparent 60%);
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.6;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900' preserveAspectRatio='xMidYMid slice'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%234f8cff' stop-opacity='.8'/%3E%3Cstop offset='1' stop-color='%23a855f7' stop-opacity='0'/%3E%3C/linearGradient%3E%3ClinearGradient id='b' x1='1' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23a855f7' stop-opacity='.7'/%3E%3Cstop offset='1' stop-color='%2322d3ee' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M-100,80 C400,180 700,60 900,220 S1500,320 1750,180' fill='none' stroke='url(%23a)' stroke-width='2.5' opacity='.5'/%3E%3Cpath d='M-100,150 C420,270 760,130 980,310 S1520,430 1750,270' fill='none' stroke='url(%23b)' stroke-width='1.4' opacity='.38'/%3E%3Cpath d='M-150,950 C250,700 500,860 850,720 S1400,760 1750,560' fill='none' stroke='url(%23a)' stroke-width='2' opacity='.32'/%3E%3Cpath d='M-150,1000 C280,760 540,930 900,800 S1450,830 1780,640' fill='none' stroke='url(%23b)' stroke-width='1.2' opacity='.25'/%3E%3Cpath d='M1050,-60 C1220,160 1480,240 1720,190 L1720,-60 Z' fill='%237c3aed' opacity='.10'/%3E%3Cpath d='M-60,990 C300,760 520,910 920,790 L-60,990 Z' fill='%232563eb' opacity='.09'/%3E%3Cpath d='M1250,980 C1400,820 1560,780 1720,800 L1720,980 Z' fill='%236d28d9' opacity='.08'/%3E%3C/svg%3E") center/cover no-repeat;
 }
 h1,h2,h3,h4,.display{font-family:'Space Grotesk','Inter',sans-serif;letter-spacing:-.01em}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
@@ -66,7 +78,8 @@ input,select,textarea{font-family:inherit;color:var(--text)}
 /* ---------- App shell ---------- */
 .app{display:flex;min-height:100vh;position:relative;z-index:1}
 .sidebar{
-  width:236px;flex-shrink:0;background:var(--panel);
+  width:236px;flex-shrink:0;background:rgba(10,16,29,.74);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border-right:1px solid var(--line);
   display:flex;flex-direction:column;
   position:sticky;top:0;height:100vh;padding:22px 14px;
@@ -119,7 +132,7 @@ input,select,textarea{font-family:inherit;color:var(--text)}
 
 /* ---------- Cards & panels ---------- */
 .card{
-  background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);
+  background:rgba(13,21,38,.90);border:1px solid var(--line);border-radius:var(--r-lg);
   box-shadow:var(--shadow-glow);
 }
 .card-pad{padding:22px}
@@ -356,6 +369,24 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
 .poster .p-logo{position:absolute;top:14px;left:14px;display:flex;align-items:center;gap:7px;font-family:'Space Grotesk';font-weight:700;font-size:11px;letter-spacing:.05em;color:#fff;opacity:.95}
 .poster .p-logo .lm{width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);display:grid;place-items:center;font-size:12px}
 .poster .p-char{font-size:88px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.45));animation:floaty 4s ease-in-out infinite}
+.poster .p-char-img{width:54%;max-height:36%;object-fit:contain;border-radius:14px;filter:drop-shadow(0 12px 26px rgba(0,0,0,.5));animation:floaty 4s ease-in-out infinite}
+.poster .p-heroes{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:88%}
+.poster .p-heroes .p-char-img{max-height:30%}
+.asset.up{background-size:cover;background-position:center}
+.ba-vis img{width:100%;height:100%;object-fit:cover;border-radius:12px}
+.cdot{width:8px;height:8px;border-radius:50%;background:#2a3a5e;transition:background .15s}
+.cdot.on{background:var(--lime);box-shadow:0 0 8px rgba(229,245,66,.6)}
+.del-x{
+  position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;
+  background:rgba(4,8,16,.8);border:1px solid rgba(248,113,113,.55);color:#fca5a5;
+  font-size:11px;line-height:1;display:grid;place-items:center;opacity:0;transition:opacity .12s;
+  cursor:pointer;z-index:3;
+}
+.asset:hover .del-x,.ba-tile:hover .del-x,.del-x:focus-visible{opacity:1}
+.del-x:hover{background:rgba(248,113,113,.25);color:#fff}
+.ba-tile{position:relative}
+.ba-tile .del-x{top:7px;left:auto;right:7px}
+.fmt-badge{position:absolute;top:14px;right:14px;background:rgba(4,8,16,.6);border:1px solid rgba(255,255,255,.3);color:#fff;font-family:'Space Grotesk';font-weight:700;font-size:10.5px;letter-spacing:.1em;padding:4px 11px;border-radius:999px}
 @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 .poster .p-head{
   font-family:'Space Grotesk';font-weight:700;font-size:34px;line-height:1.02;text-align:center;
@@ -604,9 +635,9 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
 <body>
 <div class="app">
 <aside class="sidebar">
-  <div class="logo">
-    <div class="logo-mark">G</div>
-    <div class="logo-name">GAME<br>ENGINE<small>AI Content Studio</small></div>
+  <div class="logo" style="flex-direction:column;align-items:flex-start;gap:6px">
+    <img id="logo-img" alt="GAME ENGINE" title="Click to change logo" style="max-width:176px;max-height:58px;object-fit:contain;cursor:pointer" onclick="triggerUpload('logo')">
+    <small id="logo-sub" style="font-size:10.5px;letter-spacing:.08em;color:var(--mut);font-weight:500">AI Content Studio</small>
   </div>
   <button class="btn btn-ghost btn-sm" id="lang-toggle" style="margin:0 6px 12px;justify-content:center" onclick="setLang(state.lang==='zh'?'en':'zh')" title="Switch language / 切换语言">🌐 中文</button>
   <nav class="nav">
@@ -725,6 +756,16 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
               <div class="oc-ico">🎬</div>
               <b>Video</b>
               <small>Short video or reel</small>
+            </button>
+            <button class="opt-card" data-type="gif">
+              <div class="oc-ico">🎞</div>
+              <b>GIF</b>
+              <small>Animated GIF for posts &amp; comments</small>
+            </button>
+            <button class="opt-card" data-type="carousel">
+              <div class="oc-ico">🎠</div>
+              <b>Carousel</b>
+              <small>Multi-image swipe post (up to 10 slides)</small>
             </button>
             <button class="opt-card selected" data-type="package">
               <span class="rec-tag badge b-rec">RECOMMENDED</span>
@@ -854,7 +895,7 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
             </div>
             <div style="margin-left:auto;display:flex;gap:8px">
               <button class="btn btn-ghost btn-sm" onclick="saveToLibrary()">💾 Save</button>
-              <button class="btn btn-ghost btn-sm" onclick="toast('Package downloaded as ZIP (demo)')">⬇ Download all</button>
+              <button class="btn btn-ghost btn-sm" onclick="downloadPack()">⬇ Download all</button>
             </div>
           </div>
 
@@ -866,11 +907,16 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
             <button class="tab" data-tab="cta">🔗 CTA</button>
           </div>
 
-          <!-- PHOTO TAB -->
+          <!-- PHOTO / GIF / CAROUSEL TAB -->
           <div class="rtab" id="rtab-photo">
             <div class="poster" id="poster"></div>
+            <div id="car-controls" style="display:none;align-items:center;justify-content:center;gap:14px;margin-top:10px">
+              <button class="cal-nav-btn" onclick="carShift(-1)" aria-label="Previous slide">‹</button>
+              <div id="car-dots" style="display:flex;gap:6px"><span class="cdot on"></span><span class="cdot"></span><span class="cdot"></span></div>
+              <button class="cal-nav-btn" onclick="carShift(1)" aria-label="Next slide">›</button>
+            </div>
             <div style="display:flex;gap:7px;margin-top:13px;flex-wrap:wrap">
-              <button class="btn btn-ghost btn-sm" onclick="toast('Poster downloaded (demo)')">⬇ Download</button>
+              <button class="btn btn-ghost btn-sm" onclick="downloadPoster()">⬇ Download</button>
               <button class="btn btn-ghost btn-sm" onclick="toast('Opening editor (demo)')">✏️ Edit</button>
               <button class="btn btn-outline btn-sm" onclick="regenComponent('photo')">🔄 Regenerate</button>
               <button class="btn btn-ghost btn-sm" onclick="focusRevise('photo')">💬 Revise</button>
@@ -890,7 +936,7 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
               <span class="vid-time" id="vid-dur">0:15</span>
             </div>
             <div style="display:flex;gap:7px;margin-top:11px;flex-wrap:wrap">
-              <button class="btn btn-ghost btn-sm" onclick="toast('Video downloaded (demo)')">⬇ Download</button>
+              <button class="btn btn-ghost btn-sm" onclick="toast('Video preview only — real video generation needs the production backend',true)">⬇ Download</button>
               <button class="btn btn-ghost btn-sm" onclick="toast('Opening editor (demo)')">✏️ Edit</button>
               <button class="btn btn-outline btn-sm" onclick="regenComponent('video')">🔄 Regenerate</button>
               <button class="btn btn-ghost btn-sm" onclick="focusRevise('video')">💬 Revise</button>
@@ -1119,7 +1165,7 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
         <option value="bingo">🎱 Bingo Flux</option>
         <option value="company">🏢 Company &amp; Events</option>
       </select>
-      <button class="btn btn-primary" onclick="toast('Upload dialog would open here (demo)')">＋ Upload Asset</button>
+      <button class="btn btn-primary" onclick="triggerUpload('ba')">＋ Upload Asset</button>
     </div>
   </div>
   <div id="ba-content"></div>
@@ -1204,7 +1250,11 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
         <div class="rule-item"><span class="r-ic">🌈</span><div><b>Brand color palette</b><small>Each game's approved palette; neon accents allowed</small></div><button class="r-x" title="Remove rule">×</button></div>
         <div class="rule-item"><span class="r-ic">🔤</span><div><b>Approved fonts</b><small>Space Grotesk for display, Inter for body copy</small></div><button class="r-x" title="Remove rule">×</button></div>
       </div>
-      <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="toast('Add rule dialog (demo)')">＋ Add brand rule</button>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="toast('Add rule dialog (demo)')">＋ Add brand rule</button>
+        <button class="btn btn-outline btn-sm" onclick="triggerUpload('logo')">🖼 Upload logo</button>
+        <button class="btn btn-outline btn-sm" onclick="triggerUpload('bg')">🌌 Upload background image</button>
+      </div>
     </div>
     <div class="card card-pad">
       <div class="section-title"><div class="ico">🛡</div><h3>Content rules<small>Compliance checks run before approval</small></h3></div>
@@ -1238,6 +1288,28 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
         <label>Default creative style</label>
         <select class="input"><option>Vibrant arcade — bold type, neon glow, high energy</option><option>Premium minimal — clean layouts, restrained color</option><option>Playful cartoon — character-led, rounded shapes</option></select>
       </div>
+      <div class="hint-line"><span class="i">i</span>All changes are saved in this browser automatically.</div>
+      <button class="btn btn-danger-ghost btn-sm" style="margin-top:12px" onclick="if(confirm('Clear all saved data and reset the studio?')){localStorage.removeItem('aics_v1');location.reload()}">🧹 Clear saved data &amp; reset</button>
+    </div>
+    <div class="card card-pad">
+      <div class="section-title"><div class="ico">🔗</div><h3>GitHub Sync<small>Every change auto-publishes to your live site</small></h3></div>
+      <div class="field"><label>Repository</label><input class="input" id="gh-repo" placeholder="username/ai-content-studio"></div>
+      <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:12px">
+        <div class="field"><label>Branch</label><input class="input" id="gh-branch" value="main"></div>
+        <div class="field"><label>Access token</label><input class="input" id="gh-token" type="password" placeholder="github_pat_…"></div>
+      </div>
+      <div class="toggle-row on" id="gh-auto" onclick="this.classList.toggle('on');GH.auto=this.classList.contains('on');ghSaveCfg()">
+        <div class="tg"></div>
+        <div><b>Auto-sync every change</b><small>Calendar edits, uploads, logo &amp; background push to GitHub automatically (live in ~1 min).</small></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-primary btn-sm" onclick="ghApplyForm()">💾 Save settings</button>
+        <button class="btn btn-outline btn-sm" onclick="ghApplyForm();syncToGitHub(true)">🔄 Sync now</button>
+        <button class="btn btn-approve btn-sm" onclick="ghApplyForm();publishAppFile()">🚀 Publish app file</button>
+        <small id="gh-status" style="color:var(--mut)"></small>
+      </div>
+      <div class="hint-line"><span class="i">i</span>Publish app file: pick the newest index.html you downloaded and the app pushes it to GitHub for you — no GitHub website needed.</div>
+      <div class="hint-line"><span class="i">i</span>Create a fine-grained token at github.com → Settings → Developer settings → Fine-grained tokens, limited to this repository with Contents read &amp; write. The token stays only in this browser — never share it.</div>
     </div>
   </div>
 </section>
@@ -1353,6 +1425,8 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
   </div>
 </div>
 
+<input type="file" id="file-input" accept="image/*" multiple hidden>
+<input type="file" id="app-file-input" accept=".html,text/html" hidden>
 <script>
 /* ================= DATA ================= */
 const GAMES = {
@@ -1491,6 +1565,8 @@ const STATUS_META = {
   failed:['Failed','b-failed','ev-failed','🔴'], notposted:['Not Posted','b-notposted','ev-draft','⚪']
 };
 const TODAY = new Date(2026,8,8);
+const TYPE_ICON={video:'🎬',photo:'🖼',gif:'🎞',carousel:'🎠'};
+const TYPE_LABEL={package:'Full package',video:'Video',photo:'Photo',gif:'GIF',carousel:'Carousel'};
 
 /* Seeded content store */
 let NEXT_ID = 100;
@@ -1501,7 +1577,7 @@ const CONTENT = [
   {id:4, game:'ginto', type:'package', purpose:'Announcement', plats:['Instagram'], status:'sched', date:'2026-09-09', time:'10:00', created:'2026-09-05', versions:['Generated','Approved'], head:1},
   {id:5, game:'ocean', type:'video', purpose:'New Game Announcement', plats:['YouTube'], status:'failed', date:'2026-09-05', time:'16:00', created:'2026-09-02', versions:['Generated','Approved'], head:0},
   {id:6, game:'banana', type:'package', purpose:'Game Tutorial', plats:['Instagram','TikTok'], status:'sched', date:'2026-09-15', time:'10:00', created:'2026-09-06', versions:['Generated','Approved'], head:1},
-  {id:7, game:'blazing', type:'photo', purpose:'Seasonal Content', plats:['Facebook'], status:'draft', date:'2026-09-17', time:'14:00', created:'2026-09-07', versions:['Generated'], head:2},
+  {id:7, game:'blazing', type:'carousel', purpose:'Seasonal Content', plats:['Facebook'], status:'draft', date:'2026-09-17', time:'14:00', created:'2026-09-07', versions:['Generated'], head:2},
   {id:8, game:'bingo', type:'video', purpose:'Social Media Engagement', plats:['TikTok'], status:'sched', date:'2026-09-21', time:'19:00', created:'2026-09-07', versions:['Generated','Approved'], head:0},
   {id:9, game:'lucky', type:'package', purpose:'Announcement', plats:['Instagram'], status:'pending', date:'2026-09-24', time:'11:00', created:'2026-09-08', versions:['Generated','Revised'], head:1},
   {id:10, game:'ginto', type:'photo', purpose:'Game Feature', plats:['Facebook'], status:'sched', date:'2026-09-28', time:'09:30', created:'2026-09-08', versions:['Generated','Approved'], head:2},
@@ -1512,7 +1588,7 @@ const CONTENT = [
 const state = {
   page:'generate', type:'package', game:'banana', purpose:'New Game Announcement',
   plats:['Facebook','Instagram'], assetMode:'mine',
-  current:null, headIdx:0, playing:false, playT:null,
+  current:null, headIdx:0, carIdx:0, playing:false, playT:null,
   cal:{anchor:new Date(2026,8,8), view:'month'}, evOpen:null
 };
 
@@ -1563,7 +1639,7 @@ function renderDashboard(){
     const g=GAMES[it.game],s=STATUS_META[it.status];
     return `<div class="recent-item">
       <div class="ri-th" style="background:${g.soft};border:1px solid var(--line)">${g.e}</div>
-      <div><b>${g.name} — ${it.purpose}</b><small>${it.type==='package'?'Full package':it.type==='video'?'Video':'Photo'} · ${it.plats.join(' + ')} · created ${fmtDate(it.created)}</small></div>
+      <div><b>${g.name} — ${it.purpose}</b><small>${TYPE_LABEL[it.type]||it.type} · ${it.plats.join(' + ')} · created ${fmtDate(it.created)}</small></div>
       <span class="badge ${s[1]}"><span class="dot"></span>${s[0]}</span></div>`;
   }).join('');
   const up=CONTENT.filter(it=>it.status==='sched'&&it.date>='2026-09-08').sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
@@ -1621,18 +1697,129 @@ function onGameChange(){
   }
   renderAssetRow();
 }
+/* ---- real asset uploads (kept in memory for this demo) ---- */
+const UPLOADS={};           /* gameKey -> [{name,dataUrl,sel}] */
+let uploadCtx='gen';        /* which UI triggered the picker: 'gen' | 'ba' */
+function triggerUpload(ctx){
+  uploadCtx=ctx;
+  document.getElementById('file-input').click();
+}
+/* downscale & compress images so big files upload fine and fit browser storage */
+function processImage(file,maxDim,preferPng){
+  return new Promise(res=>{
+    const r=new FileReader();
+    r.onload=()=>{
+      const im=new Image();
+      im.onload=()=>{
+        const MAX=maxDim||1600;
+        let w=im.width,h=im.height;
+        const sc=Math.min(1,MAX/Math.max(w,h));
+        w=Math.max(1,Math.round(w*sc));h=Math.max(1,Math.round(h*sc));
+        const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+        const x=cv.getContext('2d');x.drawImage(im,0,0,w,h);
+        try{res((preferPng||file.type==='image/png')?cv.toDataURL('image/png'):cv.toDataURL('image/jpeg',.85))}
+        catch(err){res(null)}
+      };
+      im.onerror=()=>res(null);
+      im.src=r.result;
+    };
+    r.onerror=()=>res(null);
+    r.readAsDataURL(file);
+  });
+}
+/* user-set branding (their exact uploaded files, saved in this browser) */
+const BRAND={logo:null,bg:null};
+function applyBg(){
+  document.body.style.background=BRAND.bg?`url('${BRAND.bg}') center/cover no-repeat fixed`:'';
+}
+document.getElementById('file-input').addEventListener('change',e=>{
+  const files=[...e.target.files];
+  e.target.value='';
+  /* branding uploads — the user's exact file becomes the logo / background */
+  if(uploadCtx==='logo'||uploadCtx==='bg'){
+    const f=files[0]; if(!f)return;
+    if(!f.type.startsWith('image/')){toast('Only image files are supported',true);return}
+    if(f.size>15*1024*1024){toast('Image too large — max 15 MB each',true);return}
+    processImage(f,uploadCtx==='logo'?900:1920,uploadCtx==='logo').then(dataUrl=>{
+      if(!dataUrl){toast('Some images could not be read',true);return}
+      if(uploadCtx==='logo'){BRAND.logo=dataUrl;applyLogo();toast('Logo updated')}
+      else{BRAND.bg=dataUrl;applyBg();toast('Background updated')}
+      saveState();
+    });
+    return;
+  }
+  const key=uploadCtx==='ba'?$('#ba-game').value:state.game;
+  UPLOADS[key]=UPLOADS[key]||[];
+  let added=0,rejectedType=false,rejectedSize=false,failed=0;
+  const jobs=files.map(f=>new Promise(res=>{
+    if(!f.type.startsWith('image/')){rejectedType=true;return res()}
+    if(f.size>15*1024*1024){rejectedSize=true;return res()}
+    if(UPLOADS[key].length+added>=12)return res();
+    processImage(f).then(dataUrl=>{
+      if(dataUrl){UPLOADS[key].push({name:f.name.replace(/\.[^.]+$/,'').slice(0,10),dataUrl,sel:true});added++}
+      else failed++;
+      res();
+    });
+  }));
+  Promise.all(jobs).then(()=>{
+    if(rejectedType)toast('Only image files are supported',true);
+    if(rejectedSize)toast('Image too large — max 15 MB each',true);
+    if(failed)toast('Some images could not be read',true);
+    if(added){
+      if(uploadCtx==='gen')$('#ba-game').value=state.game;
+      toast(added+' image(s) added to your assets');
+      renderAssetRow(); renderBrandAssets(); saveState();
+      if(state.current&&state.current.game===key){buildPoster();applyVideoBg();renderCompliance();toast('Your uploaded image is now used as the poster visual')}
+    }
+  });
+});
+function selectedUpload(key){return (UPLOADS[key]||[]).find(u=>u.sel)}
+function selectedUploads(key){return (UPLOADS[key]||[]).filter(u=>u.sel)}
+/* company logo — embedded SVG recreation of the official GAME ENGINE logo.
+   If a real logo.png file exists next to index.html it takes priority. */
+const LOGO_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 104" width="330" height="104"><defs><linearGradient id="gm" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#FFC93C"/><stop offset=".45" stop-color="#FF8A34"/><stop offset="1" stop-color="#FF5A4E"/></linearGradient></defs><g><rect x="30" y="8" width="13" height="13" rx="2" fill="#FF5A4E"/><rect x="14" y="15" width="9" height="9" rx="2" fill="#FFB020"/><rect x="45" y="20" width="10" height="10" rx="2" fill="#FF8A34"/><rect x="6" y="33" width="10" height="10" rx="2" fill="#FFC93C"/><rect x="24" y="30" width="14" height="14" rx="2" fill="#FF7030"/><rect x="42" y="46" width="8" height="8" rx="2" fill="#FFC93C"/><rect x="12" y="50" width="12" height="12" rx="2" fill="#FF8A34"/><rect x="30" y="58" width="10" height="10" rx="2" fill="#FF5A4E"/><rect x="5" y="66" width="8" height="8" rx="2" fill="#FF9C2E"/><rect x="22" y="74" width="12" height="12" rx="2" fill="#FFC93C"/><rect x="42" y="80" width="8" height="8" rx="2" fill="#FF6A3D"/><rect x="14" y="88" width="10" height="10" rx="2" fill="#FF8A34"/></g><text x="48" y="90" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="100" fill="url(#gm)" stroke="#FFFFFF" stroke-width="5" paint-order="stroke" font-style="italic">G</text><text x="152" y="48" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-style="italic" font-size="43" letter-spacing="1"><tspan fill="#EE3E23">G</tspan><tspan fill="#F6A818">A</tspan><tspan fill="#1D6FE8">M</tspan><tspan fill="#35A9F1">E</tspan></text><text x="152" y="94" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-style="italic" font-size="43" letter-spacing="1" fill="#FFFFFF">ENGINE</text></svg>`;
+const LOGO_DATA='data:image/svg+xml;utf8,'+encodeURIComponent(LOGO_SVG);
+let LOGO_SRC=LOGO_DATA;
+function logoSrc(){return BRAND.logo||LOGO_SRC}
+function applyLogo(){
+  const src=logoSrc();
+  const li=document.getElementById('logo-img'); if(li)li.src=src;
+  const fv=document.querySelector('link[rel="icon"]'); if(fv)fv.href=src;
+  if(state.current)buildPoster();
+  renderBrandAssets();
+}
+(function(){const im=new Image();
+  im.onload=()=>{LOGO_SRC='logo.png';applyLogo()};
+  im.onerror=()=>{LOGO_SRC=LOGO_DATA;applyLogo()};
+  im.src='logo.png';})();
+const BA_REMOVED={};   /* gameKey -> Set("Category|Label") for removed built-in brand assets */
 function renderAssetRow(){
   const g=GAMES[state.game];
+  const ups=UPLOADS[state.game]||[];
   $('#asset-row').innerHTML=
     `<button class="asset selected" style="background:${g.soft}"><span style="font-family:'Space Grotesk';font-weight:800;font-size:17px">${g.short}</span><span class="lbl">Logo</span></button>`+
-    g.assets.map((a,i)=>`<button class="asset ${i<4?'selected':''}" style="background:${g.soft}">${a[0]}<span class="lbl">${a[1]}</span></button>`).join('')+
+    g.assets.map((a,i)=>`<button class="asset ${i<4?'selected':''}" data-bi="${i}" style="background:${g.soft}">${a[0]}<span class="del-x" role="button" tabindex="0" title="Remove asset">×</span><span class="lbl">${a[1]}</span></button>`).join('')+
+    ups.map((u,i)=>`<button class="asset up ${u.sel?'selected':''}" data-up="${i}" style="background-image:url('${u.dataUrl}')" title="${u.name}"><span class="del-x" role="button" tabindex="0" title="Remove asset">×</span><span class="lbl">${u.name}</span></button>`).join('')+
     `<button class="asset upload-tile"><span class="plus">＋</span>Upload</button>`;
-  $$('#asset-row .asset').forEach(a=>a.addEventListener('click',()=>{
-    if(a.classList.contains('upload-tile')){toast('Upload dialog would open here (demo)');return}
-    a.classList.toggle('selected');
-  }));
 }
 renderAssetRow();
+$('#asset-row').addEventListener('click',e=>{
+  const a=e.target.closest('.asset'); if(!a)return;
+  if(e.target.closest('.del-x')){
+    if(a.dataset.up!==undefined)(UPLOADS[state.game]||[]).splice(+a.dataset.up,1);
+    else if(a.dataset.bi!==undefined)GAMES[state.game].assets.splice(+a.dataset.bi,1);
+    renderAssetRow(); renderBrandAssets(); saveState();
+    if(state.current&&state.current.game===state.game){buildPoster();applyVideoBg();}
+    toast('Asset removed'); return;
+  }
+  if(a.classList.contains('upload-tile')){triggerUpload('gen');return}
+  a.classList.toggle('selected');
+  if(a.dataset.up!==undefined){
+    const u=(UPLOADS[state.game]||[])[+a.dataset.up];
+    if(u)u.sel=a.classList.contains('selected');
+    if(state.current&&state.current.game===state.game){buildPoster();applyVideoBg();}
+  }
+});
 
 /* ================= GENERATION FLOW ================= */
 function startGeneration(){
@@ -1657,10 +1844,15 @@ const GEN_STEPS=[
 function runGeneration(altConcept){
   const g=GAMES[state.game];
   if(altConcept)state.headIdx=(state.headIdx+1)%g.heads.length;
+  const t=state.type;
   const steps=GEN_STEPS.filter(s=>{
-    if(state.type==='photo'&&s[0]==='video')return false;
-    if(state.type==='video'&&s[0]==='photo')return false;
+    if(s[0]==='video'&&!(t==='video'||t==='package'))return false;
+    if(s[0]==='photo'&&t==='video')return false;
     return true;
+  }).map(s=>{
+    if(s[0]==='photo'&&t==='gif')return ['photo','Generating GIF animation'];
+    if(s[0]==='photo'&&t==='carousel')return ['photo','Generating carousel slides'];
+    return s;
   });
   $('#gen-sub').textContent=`${g.name} · ${state.purpose} · ${state.plats.join(' + ')}`;
   $('#gen-steps').innerHTML=steps.map(s=>`<div class="gstep" data-s="${s[0]}"><span class="gs-ic"></span>${s[1]}</div>`).join('');
@@ -1682,37 +1874,67 @@ function runGeneration(altConcept){
 }
 function buildPoster(){
   const g=GAMES[state.game];
-  const head=g.heads[state.headIdx%g.heads.length];
+  const t=state.current?state.current.type:state.type;
+  const slide=t==='carousel'?state.carIdx:0;
+  const idx=(state.headIdx+slide)%g.heads.length;
+  const head=g.heads[idx];
   const orn=g.orn;
+  let ups=selectedUploads(state.game).slice(0,4);
+  if(t==='carousel'&&ups.length)ups=[ups[slide%ups.length]];
+  let hero;
+  if(ups.length){
+    const wPct=ups.length===1?'54%':ups.length===2?'38%':ups.length===3?'28%':'36%';
+    hero=`<div class="p-heroes">${ups.map(u=>`<img class="p-char-img" style="width:${wPct}" src="${u.dataUrl}" alt="">`).join('')}</div>`;
+  }else{
+    hero=`<div class="p-char"${t==='gif'?' style="animation-duration:1.4s"':''}>${g.chars.length?g.chars[idx%g.chars.length]:g.e}</div>`;
+  }
+  const badge=t==='gif'?`<div class="fmt-badge">GIF ∞</div>`:t==='carousel'?`<div class="fmt-badge">SLIDE ${slide+1}/3</div>`:'';
   const poster=$('#poster');
   poster.style.background=g.grad;
   poster.innerHTML=`
     <div class="p-shine"></div>
-    <div class="p-logo"><span class="lm">G</span>GAME ENGINE</div>
+    <div class="p-logo"><img src="${logoSrc()}" alt="GAME ENGINE" style="height:30px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.45))"></div>
+    ${badge}
     <span class="p-orn" style="top:16%;left:9%;transform:rotate(-18deg)">${orn[0]}</span>
     <span class="p-orn" style="top:12%;right:10%;transform:rotate(14deg);font-size:20px">${orn[1]}</span>
     <span class="p-orn" style="bottom:20%;left:7%;transform:rotate(10deg);font-size:22px">${orn[2]}</span>
     <span class="p-orn" style="bottom:26%;right:8%;transform:rotate(-12deg)">${orn[3]}</span>
-    <div class="p-char">${g.chars[state.headIdx%g.chars.length]}</div>
+    ${hero}
     <div class="p-head">${head.replace('. ','.<br>')}</div>
     <div class="p-tag">${PURPOSE_TAG[state.purpose]||'GAME ENGINE'} · ${g.name.toUpperCase()}</div>
-    <div class="p-cta">${(CTAS[state.purpose]||'Play Now →').toUpperCase()}</div>`;
+    <div class="p-cta">${(((state.lang==='zh'?CTAS_ZH:CTAS)[state.purpose])||'Play Now →').toUpperCase()}</div>`;
+  const cc=$('#car-controls');
+  if(t==='carousel'){
+    cc.style.display='flex';
+    $$('#car-dots .cdot').forEach((d,i)=>d.classList.toggle('on',i===slide));
+  }else cc.style.display='none';
+}
+function carShift(d){state.carIdx=(state.carIdx+3+d)%3;buildPoster()}
+function applyVideoBg(){
+  const g=GAMES[state.game];
+  const up=selectedUpload(state.game);
+  $('#vf-bg').style.background=up
+    ?`linear-gradient(rgba(6,10,19,.35),rgba(6,10,19,.55)),url('${up.dataUrl}') center/cover`
+    :g.grad;
 }
 function showResults(){
   const g=GAMES[state.game];
   state.current={game:state.game,type:state.type,purpose:state.purpose,plats:[...state.plats],approved:false,saved:false,headIdx:state.headIdx};
+  state.carIdx=0;
   $('#result-empty').style.display='none';
   $('#result-wrap').style.display='block';
   $('#result-meta').textContent=`${g.name} · ${state.purpose} · ${state.plats.join(' + ')}`;
-  const showPhoto=state.type!=='video', showVideo=state.type!=='photo';
-  $$('#result-tabs .tab').forEach(t=>{
-    const k=t.dataset.tab; let vis=true;
+  const t=state.type;
+  const showPhoto=t!=='video', showVideo=(t==='video'||t==='package');
+  $$('#result-tabs .tab').forEach(tab=>{
+    const k=tab.dataset.tab; let vis=true;
     if(k==='photo')vis=showPhoto; if(k==='video')vis=showVideo;
-    t.style.display=vis?'':'none';
+    tab.style.display=vis?'':'none';
+    if(k==='photo')tab.innerHTML=t==='gif'?'🎞 GIF':t==='carousel'?'🎠 Carousel':'🖼 Photo';
   });
   selectTab(showPhoto?'photo':'video');
   buildPoster();
-  $('#vf-bg').style.background=g.grad;
+  applyVideoBg();
   $('#vid-label').textContent=`${g.name} — 15s reel · ${state.plats.includes('TikTok')||state.plats.includes('Instagram')?'9:16':'16:9'}`;
   stopPlay(); $('#vid-fill').style.width='0%'; $('#vid-cur').textContent='0:00';
   const auto=$('#auto-opt').classList.contains('on');
@@ -1828,7 +2050,9 @@ function runChecks(){
   add('Approved assets & logo only',true);
   add('No real-currency imagery',true);
   if(c.type!=='video')add('Image dimensions'+(c.auto?' — auto per platform':''),true);
-  if(c.type!=='photo')add('Video specs'+(c.auto?' — auto per platform':''),true);
+  if(c.type==='video'||c.type==='package')add('Video specs'+(c.auto?' — auto per platform':''),true);
+  if(c.type==='gif')add('GIF specs — ≤15s loop · <8 MB',true);
+  if(c.type==='carousel')add('Carousel slides (≤10)',true);
   return checks;
 }
 function renderCompliance(manual){
@@ -1914,6 +2138,142 @@ function fixAll(){
 }
 $('#caption-body').addEventListener('blur',()=>{if(state.current)renderCompliance()});
 
+/* ================= REAL PNG EXPORT ================= */
+const POSTER_COLORS={
+  banana:['#ffd23d','#ff8a00','#b45309'], blazing:['#ff8a5b','#e11d48','#7f1d1d'],
+  ginto:['#fde68a','#f59e0b','#92400e'], lucky:['#6ee7b7','#8b5cf6','#312e81'],
+  ocean:['#67e8f9','#2563eb','#1e3a8a'], bingo:['#d8b4fe','#7c3aed','#4c1d95'],
+  company:['#67e8f9','#4f8cff','#0f2a6b']
+};
+function rr(x,px,py,w,h,r){x.beginPath();x.moveTo(px+r,py);x.arcTo(px+w,py,px+w,py+h,r);x.arcTo(px+w,py+h,px,py+h,r);x.arcTo(px,py+h,px,py,r);x.arcTo(px,py,px+w,py,r);x.closePath()}
+function wrapText(x,text,maxW){const words=text.split(' ');const lines=[];let cur='';words.forEach(w=>{const t2=cur?cur+' '+w:w;if(x.measureText(t2).width>maxW&&cur){lines.push(cur);cur=w}else cur=t2});if(cur)lines.push(cur);return lines}
+function loadImg(src){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=src})}
+function drawImgFit(x,img,cx,cy,maxW,maxH){
+  const r=Math.min(maxW/img.width,maxH/img.height);
+  const iw=img.width*r,ih=img.height*r;
+  x.save();x.shadowColor='rgba(0,0,0,.5)';x.shadowBlur=32;x.shadowOffsetY=14;
+  rr(x,cx-iw/2,cy-ih/2,iw,ih,20);x.clip();
+  x.drawImage(img,cx-iw/2,cy-ih/2,iw,ih);x.restore();
+}
+async function downloadPoster(){
+  if(!state.current){toast('Generate content first',true);return}
+  const c=state.current, g=GAMES[c.game], t=c.type;
+  const W=1080,H=1350;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+  const x=cv.getContext('2d');
+  try{await document.fonts.load("700 92px 'Space Grotesk'");await document.fonts.load("700 30px 'Space Grotesk'");}catch(err){}
+  const cols=POSTER_COLORS[c.game]||['#4f8cff','#3b2a86','#0b1034'];
+  const rg=x.createRadialGradient(W/2,0,100,W/2,H*0.2,H*1.15);
+  rg.addColorStop(0,cols[0]);rg.addColorStop(.55,cols[1]);rg.addColorStop(1,cols[2]);
+  x.fillStyle=rg;x.fillRect(0,0,W,H);
+  const sg=x.createRadialGradient(W/2,H*.12,50,W/2,H*.12,W*.55);
+  sg.addColorStop(0,'rgba(255,255,255,.16)');sg.addColorStop(1,'rgba(255,255,255,0)');
+  x.fillStyle=sg;x.fillRect(0,0,W,H);
+  /* logo */
+  let drewLogo=false;
+  try{
+    const lg=await loadImg(logoSrc());
+    let lh=64, lw=lg.width*lh/lg.height;
+    if(lw>350){lh=lh*350/lw;lw=350}
+    x.save();x.shadowColor='rgba(0,0,0,.4)';x.shadowBlur=14;x.shadowOffsetY=4;
+    x.drawImage(lg,40,40,lw,lh);x.restore();
+    drewLogo=true;
+  }catch(err){}
+  if(!drewLogo){
+    x.fillStyle='rgba(255,255,255,.15)';rr(x,40,40,56,56,14);x.fill();
+    x.strokeStyle='rgba(255,255,255,.4)';x.lineWidth=2;rr(x,40,40,56,56,14);x.stroke();
+    x.fillStyle='#fff';x.textAlign='center';x.font="800 30px 'Space Grotesk',sans-serif";x.fillText('G',68,80);
+    x.textAlign='left';x.font="700 26px 'Space Grotesk',sans-serif";x.fillText('GAME ENGINE',112,78);
+  }
+  /* ornaments */
+  x.font='64px serif';x.globalAlpha=.9;x.textAlign='left';
+  x.fillText(g.orn[0],80,300);x.fillText(g.orn[1],W-150,250);
+  x.fillText(g.orn[2],70,H-330);x.fillText(g.orn[3],W-160,H-390);
+  x.globalAlpha=1;
+  /* hero — all selected uploaded assets */
+  const slide=t==='carousel'?state.carIdx:0;
+  let ups=selectedUploads(c.game).slice(0,4);
+  if(t==='carousel'&&ups.length)ups=[ups[slide%ups.length]];
+  const heroY=H*0.34;
+  if(ups.length){
+    try{
+      const imgs=await Promise.all(ups.map(u=>loadImg(u.dataUrl)));
+      if(imgs.length===1)drawImgFit(x,imgs[0],W/2,heroY,W*.62,H*.30);
+      else if(imgs.length===2){drawImgFit(x,imgs[0],W*.28,heroY,W*.40,H*.26);drawImgFit(x,imgs[1],W*.72,heroY,W*.40,H*.26)}
+      else if(imgs.length===3){drawImgFit(x,imgs[0],W*.20,heroY,W*.27,H*.24);drawImgFit(x,imgs[1],W*.50,heroY,W*.27,H*.24);drawImgFit(x,imgs[2],W*.80,heroY,W*.27,H*.24)}
+      else{drawImgFit(x,imgs[0],W*.30,heroY-H*.085,W*.37,H*.15);drawImgFit(x,imgs[1],W*.70,heroY-H*.085,W*.37,H*.15);drawImgFit(x,imgs[2],W*.30,heroY+H*.085,W*.37,H*.15);drawImgFit(x,imgs[3],W*.70,heroY+H*.085,W*.37,H*.15)}
+    }catch(err){}
+  }else{
+    x.font='230px serif';x.textAlign='center';
+    x.save();x.shadowColor='rgba(0,0,0,.45)';x.shadowBlur=30;x.shadowOffsetY=16;
+    x.fillText(g.chars.length?g.chars[state.headIdx%g.chars.length]:g.e,W/2,heroY+80);x.restore();
+  }
+  /* headline */
+  const head=g.heads[(state.headIdx+slide)%g.heads.length];
+  x.textAlign='center';
+  const hg=x.createLinearGradient(0,H*.50,0,H*.68);
+  hg.addColorStop(0,'#fff8d0');hg.addColorStop(.55,'#ffd83d');hg.addColorStop(1,'#ff9f1c');
+  x.font="700 92px 'Space Grotesk',sans-serif";
+  const lines=wrapText(x,head.toUpperCase(),W-160);
+  let hy=H*.56;
+  x.save();x.shadowColor='rgba(60,25,0,.55)';x.shadowOffsetY=6;x.shadowBlur=0;
+  x.fillStyle=hg;
+  lines.forEach(l=>{x.fillText(l,W/2,hy);hy+=100});
+  x.restore();
+  /* tag pill */
+  const tag=(PURPOSE_TAG[c.purpose]||'GAME ENGINE')+' · '+g.name.toUpperCase();
+  x.font="700 28px 'Space Grotesk',sans-serif";
+  const tw=Math.min(W-80,x.measureText(tag).width+70);
+  x.fillStyle='rgba(4,8,16,.55)';rr(x,(W-tw)/2,hy+6,tw,64,32);x.fill();
+  x.strokeStyle='rgba(255,255,255,.3)';rr(x,(W-tw)/2,hy+6,tw,64,32);x.stroke();
+  x.fillStyle='#fff';x.fillText(tag,W/2,hy+49);
+  /* CTA */
+  const cta=(((state.lang==='zh'?CTAS_ZH:CTAS)[c.purpose])||'Play Now →').toUpperCase();
+  x.font="700 36px 'Space Grotesk',sans-serif";
+  const cw=x.measureText(cta).width+110;
+  const cy=hy+104;
+  const cg=x.createLinearGradient(0,cy,0,cy+88);
+  cg.addColorStop(0,'#eefa5a');cg.addColorStop(1,'#c8d926');
+  x.save();x.shadowColor='rgba(229,245,66,.5)';x.shadowBlur=40;
+  x.fillStyle=cg;rr(x,(W-cw)/2,cy,cw,88,22);x.fill();x.restore();
+  x.fillStyle='#181d03';x.fillText(cta,W/2,cy+58);
+  /* format badge */
+  if(t==='gif'||t==='carousel'){
+    const b=t==='gif'?'GIF ∞':'SLIDE '+(slide+1)+'/3';
+    x.font="700 24px 'Space Grotesk',sans-serif";
+    const bw=x.measureText(b).width+50;
+    x.fillStyle='rgba(4,8,16,.6)';rr(x,W-bw-40,44,bw,48,24);x.fill();
+    x.strokeStyle='rgba(255,255,255,.35)';rr(x,W-bw-40,44,bw,48,24);x.stroke();
+    x.fillStyle='#fff';x.fillText(b,W-bw/2-40,77);
+  }
+  /* disclaimer */
+  if(!g.corporate){
+    x.font='600 22px Inter,sans-serif';x.fillStyle='rgba(255,255,255,.85)';
+    x.fillText(state.lang==='zh'?'仅限18岁以上 · 请理性游戏':'18+ only · Play responsibly',W/2,H-40);
+  }
+  cv.toBlob(b=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download=`${g.name.replace(/[^\w]+/g,'-')}-${t}${t==='carousel'?'-slide'+(slide+1):''}.png`;
+    a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    toast('Poster downloaded as PNG (1080×1350)');
+  },'image/png');
+}
+function downloadPack(){
+  if(!state.current){toast('Generate content first',true);return}
+  const c=state.current, g=GAMES[c.game];
+  if(c.type!=='video')downloadPoster();
+  const caption=$('#caption-body').innerText;
+  const tags=[...document.querySelectorAll('#tag-cloud .htag')].map(t=>t.textContent).join(' ');
+  const cta=$('#cta-body').textContent;
+  const txt=`${g.name} — ${c.purpose}\r\nPlatforms: ${c.plats.join(', ')}\r\n\r\nCAPTION:\r\n${caption}\r\n\r\nHASHTAGS:\r\n${tags}\r\n\r\nCTA:\r\n${cta}\r\n`;
+  const b=new Blob([txt],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download=`${g.name.replace(/[^\w]+/g,'-')}-caption.txt`;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  toast('Caption pack downloaded');
+}
+
 /* video sim */
 function togglePlay(){
   if(state.playing){stopPlay();return}
@@ -1980,11 +2340,11 @@ function saveToLibrary(){
 }
 function persistCurrent(status,date,time){
   const c=state.current; if(!c)return null;
-  if(c.saved){const it=CONTENT.find(x=>x.id===c.savedId);if(it){it.status=status;if(date)it.date=date;if(time)it.time=time;return it}}
+  if(c.saved){const it=CONTENT.find(x=>x.id===c.savedId);if(it){it.status=status;if(date)it.date=date;if(time)it.time=time;saveState();return it}}
   const it={id:++NEXT_ID, game:c.game, type:c.type, purpose:c.purpose, plats:[...c.plats],
     status, date:date||'2026-09-08', time:time||'10:00', created:'2026-09-08',
     versions:c.approved?['Generated','Approved']:['Generated'], head:c.headIdx%3};
-  CONTENT.push(it); c.saved=true; c.savedId=it.id; return it;
+  CONTENT.push(it); c.saved=true; c.savedId=it.id; saveState(); return it;
 }
 function openScheduleModal(){
   const g=GAMES[state.current.game];
@@ -2002,6 +2362,7 @@ function confirmSchedule(){
   const it=persistCurrent(status,date,time);
   it.plats=plats;
   if(status==='sched'&&!it.versions.includes('Scheduled'))it.versions.push('Scheduled');
+  saveState();
   closeModal('modal-schedule');
   toast(`Added to calendar — ${fmtDate(date)} at ${time}`);
   go('calendar');
@@ -2037,7 +2398,7 @@ function cellHTML(d,other,tall,evs){
       const g=GAMES[e.game], s=STATUS_META[e.status];
       const pl=e.plats.map(p=>({Instagram:'IG',Facebook:'FB',YouTube:'YT',LinkedIn:'LI',TikTok:'TT'}[p]||p)).join('+');
       return `<button class="cal-ev ${s[2]}" data-id="${e.id}" title="${g.name} — ${e.purpose}">
-        <span class="ev-th" style="background:${g.soft}">${e.type==='video'?'🎬':e.type==='photo'?'🖼':g.e}</span>
+        <span class="ev-th" style="background:${g.soft}">${TYPE_ICON[e.type]||g.e}</span>
         <span class="ev-tx"><b>${g.short} · ${pl}</b><small>${s[3]} ${s[0]}${e.time?' · '+e.time:''}</small></span>
       </button>`;
     }).join('')}
@@ -2093,7 +2454,7 @@ function openEvent(id){
     <div style="display:flex;gap:14px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
       <div style="width:64px;height:64px;border-radius:16px;display:grid;place-items:center;font-size:30px;background:${g.grad};border:1px solid rgba(255,255,255,.2)">${g.e}</div>
       <div><h3 style="margin-bottom:2px">${g.name}</h3>
-      <p style="color:var(--mut);font-size:13px">${it.purpose} · ${it.type==='package'?'Full package':it.type}</p></div>
+      <p style="color:var(--mut);font-size:13px">${it.purpose} · ${TYPE_LABEL[it.type]||it.type}</p></div>
       <span class="badge ${s[1]}" style="margin-left:auto"><span class="dot"></span>${s[0]}</span>
     </div>
     <div class="result-box" style="margin-bottom:14px">
@@ -2101,7 +2462,7 @@ function openEvent(id){
         <div><small style="color:var(--mut)">Platforms</small><br><b>${it.plats.join(' + ')}</b></div>
         <div><small style="color:var(--mut)">${it.status==='posted'?'Posted':'Scheduled for'}</small><br><b>${fmtDate(it.date)} · ${it.time}</b></div>
         <div><small style="color:var(--mut)">Created</small><br><b>${fmtDate(it.created)}</b></div>
-        <div><small style="color:var(--mut)">Attached</small><br><b>${it.type==='package'?'Photo · Video · Caption · Hashtags · CTA':it.type==='video'?'Video · Caption':'Photo · Caption'}</b></div>
+        <div><small style="color:var(--mut)">Attached</small><br><b>${it.type==='package'?'Photo · Video · Caption · Hashtags · CTA':it.type==='video'?'Video · Caption':it.type==='gif'?'GIF · Caption':it.type==='carousel'?'Carousel (3 slides) · Caption':'Photo · Caption'}</b></div>
       </div>
     </div>
     <div class="result-box" style="margin-bottom:16px">
@@ -2115,24 +2476,70 @@ function openEvent(id){
       ${it.status==='sched'?`<button class="btn btn-approve" style="flex:1" onclick="openPostedModal()">✓ Mark as Posted</button>`:''}
       ${(it.status==='draft'||it.status==='pending')?`<button class="btn btn-approve" style="flex:1" onclick="approveFromCal()">✓ Approve &amp; Schedule</button>`:''}
       ${it.status==='failed'?`<button class="btn btn-primary" style="flex:1" onclick="retryFailed()">🔄 Retry Posting</button>`:''}
-      <button class="btn btn-ghost" onclick="toast('Opening in editor (demo)')">✏️ Edit</button>
+      <button class="btn btn-ghost" onclick="editEvent()">✏️ Edit</button>
       <button class="btn btn-danger-ghost" onclick="removeEvent()">Remove</button>
     </div>`;
   openModal('modal-event');
 }
+/* real calendar event editor */
+function editEvent(){
+  const it=CONTENT.find(c=>c.id===state.evOpen); if(!it)return;
+  const g=GAMES[it.game];
+  const PL=['Facebook','Instagram','TikTok','X','YouTube','LinkedIn'];
+  const PURPS=g.corporate
+    ?['Company Event','Company News',"We're Hiring",'Partnership','Milestone','Custom']
+    :['New Game Announcement','Game Feature','Announcement','Game Tutorial','Feature Highlight','Social Media Engagement','Seasonal Content','Custom'];
+  $('#ev-detail').innerHTML=`
+    <h3 style="margin-bottom:2px">✏️ Edit — ${g.name}</h3>
+    <p class="m-sub">${TYPE_LABEL[it.type]||it.type}</p>
+    <div class="field"><label>Content purpose</label>
+      <select class="input" id="ev-purpose">${PURPS.map(p=>`<option ${it.purpose===p?'selected':''}>${p}</option>`).join('')}</select>
+    </div>
+    <div class="field"><label>Platforms</label><div id="ev-plats">
+      ${PL.map(p=>`<div class="ckrow ${it.plats.includes(p)?'on':''}" data-p="${p}"><span class="ck">✓</span>${p}</div>`).join('')}
+    </div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>Date</label><input type="date" class="input" id="ev-date" value="${it.date}"></div>
+      <div class="field"><label>Time</label><input type="time" class="input" id="ev-time" value="${it.time}"></div>
+    </div>
+    <div class="field"><label>Status</label>
+      <select class="input" id="ev-status">
+        ${['draft','pending','sched','posted','failed'].map(s=>`<option value="${s}" ${it.status===s?'selected':''}>${STATUS_META[s][3]} ${STATUS_META[s][0]}</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:flex;gap:9px">
+      <button class="btn btn-primary" style="flex:1" onclick="saveEventEdit()">💾 Save changes</button>
+      <button class="btn btn-ghost" onclick="openEvent(${it.id})">Cancel</button>
+    </div>`;
+  $$('#ev-plats .ckrow').forEach(r=>r.addEventListener('click',()=>r.classList.toggle('on')));
+}
+function saveEventEdit(){
+  const it=CONTENT.find(c=>c.id===state.evOpen); if(!it)return;
+  const plats=$$('#ev-plats .ckrow.on').map(r=>r.dataset.p);
+  if(!plats.length){toast('Select at least one platform',true);return}
+  it.plats=plats;
+  it.purpose=$('#ev-purpose').value;
+  it.date=$('#ev-date').value||it.date;
+  it.time=$('#ev-time').value||it.time;
+  it.status=$('#ev-status').value;
+  if(!it.versions.includes('Revised'))it.versions.push('Revised');
+  saveState(); closeModal('modal-event');
+  renderCalendar(); renderLibrary(); renderDashboard();
+  toast('Changes saved');
+}
 function approveFromCal(){
   const it=CONTENT.find(c=>c.id===state.evOpen); if(!it)return;
   it.status='sched'; if(!it.versions.includes('Approved'))it.versions.push('Approved');
-  closeModal('modal-event'); renderCalendar(); renderLibrary(); toast('Approved — now Scheduled');
+  saveState(); closeModal('modal-event'); renderCalendar(); renderLibrary(); toast('Approved — now Scheduled');
 }
 function retryFailed(){
   const it=CONTENT.find(c=>c.id===state.evOpen); if(!it)return;
-  it.status='sched'; closeModal('modal-event'); renderCalendar(); toast('Re-queued for posting');
+  it.status='sched'; saveState(); closeModal('modal-event'); renderCalendar(); toast('Re-queued for posting');
 }
 function removeEvent(){
   const i=CONTENT.findIndex(c=>c.id===state.evOpen);
   if(i>-1)CONTENT.splice(i,1);
-  closeModal('modal-event'); renderCalendar(); renderLibrary(); toast('Removed');
+  saveState(); closeModal('modal-event'); renderCalendar(); renderLibrary(); toast('Removed');
 }
 function openPostedModal(){
   const it=CONTENT.find(c=>c.id===state.evOpen); if(!it)return;
@@ -2148,7 +2555,7 @@ function confirmPosted(){
   it.status='posted'; it.date=$('#mp-date').value||it.date; it.time=$('#mp-time').value||it.time;
   it.link=$('#mp-link').value||it.link||'';
   if(!it.versions.includes('Posted'))it.versions.push('Posted');
-  closeModal('modal-posted'); renderCalendar(); renderLibrary();
+  saveState(); closeModal('modal-posted'); renderCalendar(); renderLibrary();
   toast('Confirmed — 🔵 Scheduled → 🟢 Posted');
 }
 
@@ -2171,7 +2578,7 @@ function generatePlan(){
   const gap=Math.max(1,Math.floor(days/total));
   for(let i=0;i<total;i++){
     const d=new Date(2026,8,10); d.setDate(d.getDate()+i*gap+(i%2));
-    const type=i%3===1?'video':(i%3===2?'photo':'package');
+    const type=['package','video','photo','carousel'][i%4];
     const pl=[plats[i%plats.length]];
     if(plats.length>1&&i%2===0)pl.push(plats[(i+1)%plats.length]);
     PLAN.push({date:dstr(d), game:games[i%games.length], purpose:purposes[i%purposes.length], type, plats:[...new Set(pl)]});
@@ -2190,7 +2597,7 @@ function backToPlannerForm(){$('#planner-form').style.display='block';$('#planne
 function approvePlan(){
   PLAN.forEach(p=>CONTENT.push({id:++NEXT_ID, game:p.game, type:p.type, purpose:p.purpose, plats:p.plats,
     status:'pending', date:p.date, time:'10:00', created:'2026-09-08', versions:['Planned'], head:0}));
-  closeModal('modal-planner'); renderCalendar(); renderLibrary();
+  saveState(); closeModal('modal-planner'); renderCalendar(); renderLibrary();
   toast(`Plan approved — ${PLAN.length} posts added as Pending Approval`);
 }
 
@@ -2207,7 +2614,7 @@ function renderLibrary(){
     const g=GAMES[it.game], s=STATUS_META[it.status];
     return `<div class="lib-card">
       <div class="lib-thumb" style="background:${g.grad}">
-        <span style="filter:drop-shadow(0 8px 18px rgba(0,0,0,.4))">${it.type==='video'?'🎬':g.chars[it.head%g.chars.length]}</span>
+        <span style="filter:drop-shadow(0 8px 18px rgba(0,0,0,.4))">${it.type==='video'?'🎬':it.type==='gif'?'🎞':it.type==='carousel'?'🎠':(g.chars.length?g.chars[it.head%g.chars.length]:g.e)}</span>
         <span class="lt-type">${it.type==='package'?'FULL PACKAGE':it.type.toUpperCase()}</span>
         <span class="lt-status badge ${s[1]}" style="backdrop-filter:blur(3px)"><span class="dot"></span>${s[0]}</span>
       </div>
@@ -2228,32 +2635,55 @@ function renderLibrary(){
 /* ================= BRAND ASSETS ================= */
 function renderBrandAssets(){
   const key=$('#ba-game').value, g=GAMES[key];
-  const cats=g.corporate?[
-    ['Logos','🏷',[[g.short,'Primary logo'],['G','Game Engine mark']]],
-    ['Team & People','👥',[['👥','Team photo'],['🧑‍💼','Leadership'],['🤝','Partners'],['🎓','New hires']]],
-    ['Event visuals','🎪',[['🎪','Event stage'],['🏢','Office'],['📸','Event photos'],['🎤','Talks & panels']]],
-    ['Corporate elements','💼',[['🏆','Awards'],['🎗','Badge'],['📊','Infographic kit'],['💙','Brand pattern']]]
+  const removed=BA_REMOVED[key]||new Set();
+  /* items: [visual, label, kind, ref] — kind: static | char | sym | upload */
+  const st=(vis,lbl)=>[vis,lbl,'static',lbl];
+  let cats=g.corporate?[
+    ['Logos','🏷',[st(g.short,'Primary logo'),st('<img src="'+logoSrc()+'" alt="">','Game Engine mark')]],
+    ['Team & People','👥',[st('👥','Team photo'),st('🧑‍💼','Leadership'),st('🤝','Partners'),st('🎓','New hires')]],
+    ['Event visuals','🎪',[st('🎪','Event stage'),st('🏢','Office'),st('📸','Event photos'),st('🎤','Talks & panels')]],
+    ['Corporate elements','💼',[st('🏆','Awards'),st('🎗','Badge'),st('📊','Infographic kit'),st('💙','Brand pattern')]]
   ]:[
-    ['Logos','🏷',[[g.short,'Primary logo'],['G','Game Engine mark']]],
-    ['Characters','🧸',g.chars.map((c,i)=>[c,'Character '+(i+1)])],
-    ['Backgrounds','🌄',[[g.orn[0],'Key art BG'],[g.orn[1],'Pattern BG'],['🌌','Night BG'],['✨','Glow BG']]],
-    ['Game symbols','🎰',g.assets.slice(0,4)],
-    ['Brand elements','💠',[['🪙','Coin set'],['⭐','Star burst'],['🏆','Win badge'],['🎁','Bonus chest']]]
+    ['Logos','🏷',[st(g.short,'Primary logo'),st('<img src="'+logoSrc()+'" alt="">','Game Engine mark')]],
+    ['Characters','🧸',g.chars.map((c,i)=>[c,'Character '+(i+1),'char',i])],
+    ['Backgrounds','🌄',[st(g.orn[0],'Key art BG'),st(g.orn[1],'Pattern BG'),st('🌌','Night BG'),st('✨','Glow BG')]],
+    ['Game symbols','🎰',g.assets.slice(0,4).map(a=>[a[0],a[1],'sym',a[1]])],
+    ['Brand elements','💠',[st('🪙','Coin set'),st('⭐','Star burst'),st('🏆','Win badge'),st('🎁','Bonus chest')]]
   ];
-  $('#ba-content').innerHTML=cats.map(([title,ico,items])=>`
+  const ups=UPLOADS[key]||[];
+  cats.push(['My uploads','📤',ups.map((u,i)=>[`<img src="${u.dataUrl}" alt="">`,u.name,'upload',i])]);
+  $('#ba-content').innerHTML=cats.map(([title,ico,items])=>{
+    const vis=items.filter(it=>!(it[2]==='static'&&removed.has(title+'|'+it[3])));
+    return `
     <div class="ba-section">
-      <div class="section-title"><div class="ico">${ico}</div><h3>${title}<small>${items.length} approved · used automatically in generation</small></h3></div>
+      <div class="section-title"><div class="ico">${ico}</div><h3>${title}<small>${vis.length} approved · used automatically in generation</small></h3></div>
       <div class="ba-grid">
-        ${items.map(([vis,lbl])=>`<div class="ba-tile">
-          <div class="ba-vis" style="background:${g.soft};border:1px solid var(--line);${(vis===g.short||vis==='G')?"font-family:'Space Grotesk';font-weight:800;font-size:19px":''}">${vis}</div>
+        ${vis.map(([v,lbl,kind,ref])=>`<div class="ba-tile" data-kind="${kind}" data-ref="${ref}" data-cat="${title}">
+          <span class="del-x" role="button" tabindex="0" title="Remove asset">×</span>
+          <div class="ba-vis" style="background:${g.soft};border:1px solid var(--line);${(v===g.short||v==='G')?"font-family:'Space Grotesk';font-weight:800;font-size:19px":''}">${v}</div>
           <b>${lbl}</b><small>Approved ✓</small>
         </div>`).join('')}
-        <button class="ba-tile" style="border-style:dashed;cursor:pointer" onclick="toast('Upload dialog would open here (demo)')">
+        <button class="ba-tile" style="border-style:dashed;cursor:pointer" onclick="triggerUpload('ba')">
           <div class="ba-vis" style="border:1.5px dashed #2a3a5e;color:var(--mut)">＋</div><b style="color:var(--mut)">Upload</b><small>&nbsp;</small>
         </button>
       </div>
-    </div>`).join('');
+      ${title==='My uploads'&&!vis.length?`<div class="hint-line"><span class="i">i</span>Uploads are saved per game — if you uploaded under a different game, switch the selector above to see them.</div>`:''}
+    </div>`;}).join('');
 }
+document.getElementById('ba-content').addEventListener('click',e=>{
+  const del=e.target.closest('.del-x'); if(!del)return;
+  const tile=del.closest('.ba-tile'); if(!tile)return;
+  const key=$('#ba-game').value, g=GAMES[key];
+  const kind=tile.dataset.kind, ref=tile.dataset.ref, cat=tile.dataset.cat;
+  if(kind==='upload')(UPLOADS[key]||[]).splice(+ref,1);
+  else if(kind==='char')g.chars.splice(+ref,1);
+  else if(kind==='sym'){const i=g.assets.findIndex(x=>x[1]===ref);if(i>-1)g.assets.splice(i,1)}
+  else (BA_REMOVED[key]=BA_REMOVED[key]||new Set()).add(cat+'|'+ref);
+  renderBrandAssets(); saveState();
+  if(state.game===key)renderAssetRow();
+  if(state.current&&state.current.game===key){buildPoster();applyVideoBg();}
+  toast('Asset removed');
+});
 
 /* ================= TEMPLATES ================= */
 const TEMPLATES=[
@@ -2289,6 +2719,140 @@ document.getElementById('tpl-grid').innerHTML=TEMPLATES.map(([name,e,desc,gk])=>
       <span style="margin-left:auto;display:flex;gap:4px">${platIcons([p])}</span></div>`;
   }).join('');
 })();
+
+/* ================= GITHUB SYNC — edits auto-publish to the live site ================= */
+const GH={repo:'',branch:'main',token:'',auto:true,last:0};
+function ghLoadCfg(){try{Object.assign(GH,JSON.parse(localStorage.getItem('aics_gh')||'{}'))}catch(err){}}
+function ghSaveCfg(){try{localStorage.setItem('aics_gh',JSON.stringify(GH))}catch(err){}}
+function ghHeaders(){return {'Authorization':'Bearer '+GH.token,'Accept':'application/vnd.github+json'}}
+function b64EncodeUnicode(str){return btoa(unescape(encodeURIComponent(str)))}
+async function ghPut(path,b64,msg){
+  const url=`https://api.github.com/repos/${GH.repo}/contents/${path}`;
+  let sha;
+  try{const r=await fetch(url+'?ref='+encodeURIComponent(GH.branch),{headers:ghHeaders()});if(r.ok){sha=(await r.json()).sha}}catch(err){}
+  const res=await fetch(url,{method:'PUT',headers:ghHeaders(),
+    body:JSON.stringify(Object.assign({message:msg,content:b64,branch:GH.branch},sha?{sha}:{}))});
+  if(!res.ok)throw new Error('PUT '+path+' → '+res.status);
+}
+let ghBusy=false, ghTimer=null;
+function setGhStatus(s){const el=document.getElementById('gh-status');if(el)el.textContent=s}
+async function syncToGitHub(manual){
+  if(!GH.repo||!GH.token){if(manual)toast('Set your GitHub repo and token first',true);return}
+  if(ghBusy)return; ghBusy=true;
+  setGhStatus('⏳ Syncing…');
+  try{
+    const gamesLite={};Object.keys(GAMES).forEach(k=>gamesLite[k]={chars:GAMES[k].chars,assets:GAMES[k].assets});
+    const removed={};Object.keys(BA_REMOVED).forEach(k=>removed[k]=[...BA_REMOVED[k]]);
+    const payload={content:CONTENT,uploads:UPLOADS,removed,gamesLite,brand:BRAND,nextId:NEXT_ID,savedAt:Date.now()};
+    await ghPut('aics-data.json',b64EncodeUnicode(JSON.stringify(payload)),'Update studio data');
+    if(BRAND.logo)await ghPut('logo.png',BRAND.logo.split(',')[1],'Update logo');
+    if(BRAND.bg)await ghPut('bg.png',BRAND.bg.split(',')[1],'Update background');
+    GH.last=Date.now();ghSaveCfg();
+    setGhStatus('✅ Synced '+new Date(GH.last).toLocaleTimeString());
+    if(manual)toast('Synced to GitHub — live site updates within ~1 minute');
+  }catch(err){
+    const m=String(err&&err.message||'');
+    let hint='check repo name and token';
+    if(m.includes('401'))hint='token invalid — paste the full github_pat_… token';
+    else if(m.includes('403'))hint='token has no permission — needs Contents: Read and write for this repo';
+    else if(m.includes('404'))hint='repo not found — use USERNAME/ai-content-studio and make sure the token can access it';
+    else if(m.includes('409'))hint='conflict — press Sync now again';
+    setGhStatus('⚠️ Sync failed — '+hint);
+    if(manual)toast('GitHub sync failed: '+hint,true);
+  }
+  ghBusy=false;
+}
+function queueSync(){
+  if(GH.auto===false||!GH.token||!GH.repo)return;
+  clearTimeout(ghTimer); ghTimer=setTimeout(()=>syncToGitHub(false),4000);
+}
+function ghApplyForm(){
+  GH.repo=$('#gh-repo').value.trim()
+    .replace(/^https?:\/\//,'').replace(/^www\./,'').replace(/^github\.com\//,'')
+    .replace(/\.git$/,'').replace(/\/+$/,'').replace(/\s+/g,'');
+  GH.branch=$('#gh-branch').value.trim()||'main';
+  GH.token=$('#gh-token').value.trim();
+  $('#gh-repo').value=GH.repo;
+  ghSaveCfg(); toast('GitHub settings saved');
+}
+function rerenderAllPages(){renderDashboard();renderCalendar();renderLibrary();renderBrandAssets();renderAssetRow();applyLogo();applyBg()}
+/* one-click app publishing — the app pushes a new index.html to GitHub itself */
+function publishAppFile(){
+  if(!GH.repo||!GH.token){toast('Set your GitHub repo and token first',true);return}
+  document.getElementById('app-file-input').click();
+}
+document.getElementById('app-file-input').addEventListener('change',e=>{
+  const f=e.target.files[0]; e.target.value='';
+  if(!f)return;
+  const r=new FileReader();
+  r.onload=async()=>{
+    const txt=String(r.result||'');
+    if(!txt.includes('AI Content Studio')||!txt.includes('</html>')){
+      toast('That does not look like the AI Content Studio index.html file',true);return;
+    }
+    setGhStatus('⏳ Publishing app…');
+    try{
+      await ghPut('index.html',b64EncodeUnicode(txt),'Update app');
+      GH.last=Date.now();ghSaveCfg();
+      setGhStatus('✅ App published '+new Date(GH.last).toLocaleTimeString());
+      toast('App published — live site updates in ~1 minute (Ctrl+F5 to see it)');
+    }catch(err){
+      setGhStatus('⚠️ Publish failed — check repo/token');
+      toast('Publish failed — check repo name and token',true);
+    }
+  };
+  r.readAsText(f);
+});
+async function loadRemoteState(){
+  let repo=GH.repo, branch=GH.branch||'main';
+  if(!repo&&location.hostname.endsWith('.github.io')){
+    const user=location.hostname.split('.')[0];
+    const seg=location.pathname.split('/').filter(Boolean)[0];
+    if(seg)repo=user+'/'+seg;
+  }
+  if(!repo)return;
+  try{
+    const r=await fetch(`https://raw.githubusercontent.com/${repo}/${branch}/aics-data.json?t=`+Date.now());
+    if(!r.ok)return;
+    const d=await r.json();
+    let localAt=0;try{localAt=(JSON.parse(localStorage.getItem('aics_v1')||'{}').savedAt)||0}catch(err){}
+    if((d.savedAt||0)>localAt){
+      if(d.uploads){Object.keys(UPLOADS).forEach(k=>delete UPLOADS[k]);Object.assign(UPLOADS,d.uploads)}
+      if(Array.isArray(d.content)&&d.content.length){CONTENT.length=0;d.content.forEach(c=>CONTENT.push(c))}
+      if(d.removed){Object.keys(BA_REMOVED).forEach(k=>delete BA_REMOVED[k]);Object.entries(d.removed).forEach(([k,a])=>BA_REMOVED[k]=new Set(a))}
+      if(d.gamesLite)Object.entries(d.gamesLite).forEach(([k,v])=>{if(GAMES[k]){GAMES[k].chars=v.chars;GAMES[k].assets=v.assets}});
+      if(d.brand){BRAND.logo=d.brand.logo||BRAND.logo;BRAND.bg=d.brand.bg||BRAND.bg}
+      if(d.nextId)NEXT_ID=Math.max(NEXT_ID,d.nextId);
+      rerenderAllPages();
+    }
+  }catch(err){}
+}
+
+/* ================= BROWSER PERSISTENCE ================= */
+function saveState(){
+  const gamesLite={};Object.keys(GAMES).forEach(k=>gamesLite[k]={chars:GAMES[k].chars,assets:GAMES[k].assets});
+  const removed={};Object.keys(BA_REMOVED).forEach(k=>removed[k]=[...BA_REMOVED[k]]);
+  try{
+    localStorage.setItem('aics_v1',JSON.stringify({uploads:UPLOADS,content:CONTENT,removed,gamesLite,lang:state.lang,nextId:NEXT_ID,brand:BRAND,savedAt:Date.now()}));
+  }catch(err){
+    try{localStorage.setItem('aics_v1',JSON.stringify({uploads:{},content:CONTENT,removed,gamesLite,lang:state.lang,nextId:NEXT_ID,brand:BRAND,savedAt:Date.now()}))}catch(e2){}
+    toast('Storage full — new uploads may not be saved after refresh',true);
+  }
+  queueSync();
+}
+function loadState(){
+  try{
+    const raw=localStorage.getItem('aics_v1');if(!raw)return;
+    const d=JSON.parse(raw);
+    if(d.uploads)Object.keys(d.uploads).forEach(k=>UPLOADS[k]=d.uploads[k]);
+    if(Array.isArray(d.content)&&d.content.length){CONTENT.length=0;d.content.forEach(c=>CONTENT.push(c));}
+    if(d.removed)Object.keys(d.removed).forEach(k=>BA_REMOVED[k]=new Set(d.removed[k]));
+    if(d.gamesLite)Object.keys(d.gamesLite).forEach(k=>{if(GAMES[k]){GAMES[k].chars=d.gamesLite[k].chars;GAMES[k].assets=d.gamesLite[k].assets}});
+    if(d.nextId)NEXT_ID=d.nextId;
+    if(d.brand){BRAND.logo=d.brand.logo||null;BRAND.bg=d.brand.bg||null}
+    if(d.lang==='zh')setTimeout(()=>setLang('zh'),80);
+  }catch(err){}
+}
 
 /* ================= I18N — 中文 ================= */
 state.lang='en';
@@ -2506,6 +3070,57 @@ const ZH=[
 ['Clover','四叶草'],['Rainbow','彩虹'],['Palette','调色盘'],['Aurora BG','极光背景'],['Wheel','转盘'],
 ['Fish','小鱼'],['Octopus','章鱼'],['Trident','三叉戟'],['Reef BG','珊瑚背景'],['Shell','贝壳'],['Pearl','珍珠'],
 ['Ball','宾果球'],['Daub','涂点'],['Confetti','彩带'],['Grid BG','网格背景'],['Card','卡片'],
+/* uploads, GIF & carousel */
+['My uploads','我的上传'],
+[' image(s) added to your assets',' 张图片已添加到素材库'],
+['Only image files are supported','仅支持图片文件'],
+['Image too large — max 15 MB each','图片过大 —— 每张最多 15 MB'],
+['Some images could not be read','部分图片无法读取'],
+['Uploads are saved per game — if you uploaded under a different game, switch the selector above to see them.','上传按游戏分别保存 —— 如果你在其他游戏下上传过，请切换上方选择器查看。'],
+['Your uploaded image is now used as the poster visual','上传的图片已用作海报主视觉'],
+['Animated GIF for posts & comments','用于帖子和评论的 GIF 动图'],
+['Multi-image swipe post (up to 10 slides)','多图滑动帖（最多10张）'],
+['Generating GIF animation','生成 GIF 动图'],
+['Generating carousel slides','生成轮播图片'],
+['Carousel slides (≤10)','轮播图数量（≤10）'],
+['GIF specs — ≤15s loop · <8 MB','GIF 规格 —— ≤15秒循环 · <8 MB'],
+['Carousel (3 slides) · Caption','轮播图（3张）· 文案'],
+['CAROUSEL','轮播图'],['Carousel','轮播图'],
+['Asset removed','素材已移除'],['Remove asset','移除素材'],
+['Poster downloaded as PNG (1080×1350)','海报已下载为 PNG（1080×1350）'],
+['Caption pack downloaded','文案包已下载'],
+['Storage full — new uploads may not be saved after refresh','存储已满 —— 刷新后新上传可能无法保留'],
+['Video preview only — real video generation needs the production backend','视频仅为预览 —— 真实视频生成需要正式后端'],
+['All changes are saved in this browser automatically.','所有更改会自动保存在此浏览器中。'],
+['Clear saved data & reset','清除已保存数据并重置'],
+['Save changes','保存更改'],['Changes saved','更改已保存'],
+['Logo updated','Logo 已更新'],['Background updated','背景已更新'],
+['Upload logo','上传 Logo'],['Upload background image','上传背景图片'],
+['Click to change logo','点击更换 Logo'],
+['GitHub Sync','GitHub 同步'],['Every change auto-publishes to your live site','每次更改自动发布到线上站点'],
+['Repository','仓库'],['Branch','分支'],['Access token','访问令牌'],
+['Auto-sync every change','每次更改自动同步'],
+['Calendar edits, uploads, logo & background push to GitHub automatically (live in ~1 min).','日历编辑、上传、Logo 和背景会自动推送到 GitHub（约 1 分钟后生效）。'],
+['Save settings','保存设置'],['Sync now','立即同步'],
+['Synced to GitHub — live site updates within ~1 minute','已同步到 GitHub —— 线上站点约 1 分钟内更新'],
+['GitHub sync failed — check repo name and token','GitHub 同步失败 —— 请检查仓库名和令牌'],
+['Set your GitHub repo and token first','请先设置 GitHub 仓库和令牌'],
+['GitHub settings saved','GitHub 设置已保存'],
+['Syncing…','同步中…'],['Last synced ','上次同步 '],['Synced ','已同步 '],['Sync failed — ','同步失败 —— '],
+['GitHub sync failed: ','GitHub 同步失败：'],
+['token invalid — paste the full github_pat_… token','令牌无效 —— 请粘贴完整的 github_pat_… 令牌'],
+['token has no permission — needs Contents: Read and write for this repo','令牌权限不足 —— 需要此仓库的 Contents 读写权限'],
+['repo not found — use USERNAME/ai-content-studio and make sure the token can access it','找不到仓库 —— 请使用 用户名/ai-content-studio 并确保令牌可访问该仓库'],
+['conflict — press Sync now again','发生冲突 —— 请再次点击立即同步'],
+['check repo name and token','请检查仓库名和令牌'],
+['Publish app file: pick the newest index.html you downloaded and the app pushes it to GitHub for you — no GitHub website needed.','发布应用文件：选择你下载的最新 index.html，应用会自动推送到 GitHub —— 无需打开 GitHub 网站。'],
+['Publish app file','发布应用文件'],
+['App published — live site updates in ~1 minute (Ctrl+F5 to see it)','应用已发布 —— 线上站点约 1 分钟内更新（按 Ctrl+F5 查看）'],
+['App published ','应用已发布 '],['Publishing app…','正在发布应用…'],
+['Publish failed — check repo name and token','发布失败 —— 请检查仓库名和令牌'],
+['Publish failed — check repo/token','发布失败 —— 请检查仓库/令牌'],
+['That does not look like the AI Content Studio index.html file','这个文件看起来不是 AI Content Studio 的 index.html'],
+['Create a fine-grained token at github.com → Settings → Developer settings → Fine-grained tokens, limited to this repository with Contents read & write. The token stays only in this browser — never share it.','请在 github.com → Settings → Developer settings → Fine-grained tokens 创建仅限此仓库、具有 Contents 读写权限的令牌。令牌只保存在此浏览器中 —— 请勿分享。'],
 ['All ','共 '],[' at ',' '],
 ];
 const ZH_MAP=new Map(ZH);
@@ -2582,6 +3197,7 @@ function setLang(l){
   else{stopI18nObs();restoreTree(document.body)}
   renderDashboard();renderCalendar();renderLibrary();renderBrandAssets();
   if(state.current)renderCompliance();
+  saveState();
 }
 
 /* ================= INIT ================= */
@@ -2590,6 +3206,16 @@ document.addEventListener('keydown',e=>{
   if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('toggle-row')){e.preventDefault();e.target.click()}
 });
 renderDashboard(); renderCalendar(); renderLibrary(); renderBrandAssets();
+loadState();
+renderDashboard(); renderCalendar(); renderLibrary(); renderBrandAssets(); renderAssetRow();
+applyLogo(); applyBg();
+ghLoadCfg();
+$('#gh-repo').value=GH.repo||'';
+$('#gh-branch').value=GH.branch||'main';
+$('#gh-token').value=GH.token||'';
+document.getElementById('gh-auto').classList.toggle('on',GH.auto!==false);
+if(GH.last)setGhStatus('✅ Last synced '+new Date(GH.last).toLocaleTimeString());
+loadRemoteState();
 </script>
 </div>
 <div id="toast-wrap"></div>
