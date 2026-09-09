@@ -1325,10 +1325,11 @@ select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xml
       <div class="field"><label id="ai-key-label">Gemini API key</label><input class="input" id="ai-key" type="password" placeholder="AIza…"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         <button class="btn btn-primary btn-sm" onclick="aiApplyForm()">💾 Save key</button>
+        <button class="btn btn-outline btn-sm" onclick="copySetupLink()">🔗 Copy setup link for teammates</button>
         <small id="ai-status" style="color:var(--mut)"></small>
       </div>
       <div class="hint-line"><span class="i">i</span>Gemini: free key at aistudio.google.com → "Get API key". OpenAI: key (sk-…) from platform.openai.com. With a key set, Generate creates real AI-designed posters using your uploaded assets and logo. Without it, the quick template poster is used.</div>
-      <div class="hint-line"><span class="i">i</span>The key stays only in this browser — it is never uploaded to GitHub.</div>
+      <div class="hint-line"><span class="i">i</span>The key stays only in this browser — it is never uploaded to GitHub. To share with teammates, send them the setup link privately (chat/DM) — they open it once and AI posters are enabled for them too.</div>
     </div>
   </div>
 </section>
@@ -2779,6 +2780,33 @@ function aiApplyForm(){
   aiSaveCfg(); setAiStatus();
   toast(v?'AI key saved — AI posters enabled':'AI key cleared');
 }
+/* share AI setup with teammates via a private link (key never touches GitHub) */
+function copySetupLink(){
+  if(!aiReady()){toast('Set your AI key first',true);return}
+  const payload={p:AI.provider,k:AI.provider==='openai'?AI.okey:AI.gkey};
+  const base=location.protocol.indexOf('http')===0
+    ?location.href.split('#')[0]
+    :'https://mellydeguzman01-ship-it.github.io/ai-content-studio/';
+  const link=base+'#setup='+btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  const done=()=>toast('Setup link copied — send it privately to teammates only');
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(link).then(done).catch(()=>{prompt('Copy this link:',link)});
+  else prompt('Copy this link:',link);
+}
+function applySetupFromHash(){
+  try{
+    const m=location.hash.match(/#setup=(.+)/);
+    if(!m)return false;
+    const d=JSON.parse(decodeURIComponent(escape(atob(m[1]))));
+    if(d&&d.k){
+      AI.provider=d.p==='openai'?'openai':'gemini';
+      if(AI.provider==='openai')AI.okey=d.k; else AI.gkey=d.k;
+      aiSaveCfg();
+      history.replaceState(null,'',location.pathname+location.search);
+      return true;
+    }
+  }catch(err){}
+  return false;
+}
 function dataUrlToBlob(du){
   const i=du.indexOf(',');
   const mime=du.slice(5,du.indexOf(';'));
@@ -3282,6 +3310,11 @@ const ZH=[
 ['AI image failed — using template poster (check your AI key/quota)','AI 图像生成失败 —— 已使用模板海报（请检查密钥/额度）'],
 ['Generating a new AI concept…','正在生成新的 AI 概念…'],
 ['AI poster downloaded','AI 海报已下载'],
+['Copy setup link for teammates','复制团队设置链接'],
+['Setup link copied — send it privately to teammates only','设置链接已复制 —— 请仅私下发送给同事'],
+['AI setup applied from link ✨','已通过链接应用 AI 设置 ✨'],
+['Set your AI key first','请先设置 AI 密钥'],
+['The key stays only in this browser — it is never uploaded to GitHub. To share with teammates, send them the setup link privately (chat/DM) — they open it once and AI posters are enabled for them too.','密钥只保存在此浏览器中 —— 不会上传到 GitHub。要与同事共享，请私下（聊天/私信）发送设置链接 —— 他们打开一次即可启用 AI 海报。'],
 ['Create a fine-grained token at github.com → Settings → Developer settings → Fine-grained tokens, limited to this repository with Contents read & write. The token stays only in this browser — never share it.','请在 github.com → Settings → Developer settings → Fine-grained tokens 创建仅限此仓库、具有 Contents 读写权限的令牌。令牌只保存在此浏览器中 —— 请勿分享。'],
 ['All ','共 '],[' at ',' '],
 ];
@@ -3378,10 +3411,12 @@ $('#gh-token').value=GH.token||'';
 document.getElementById('gh-auto').classList.toggle('on',GH.auto!==false);
 if(GH.last)setGhStatus('✅ Last synced '+new Date(GH.last).toLocaleTimeString());
 aiLoadCfg();
+const setupApplied=applySetupFromHash();
 $('#ai-provider').value=AI.provider||'gemini';
 $('#ai-key').value=(AI.provider==='openai'?AI.okey:AI.gkey)||'';
 document.getElementById('ai-key-label').textContent=AI.provider==='openai'?'OpenAI API key':'Gemini API key';
 setAiStatus();
+if(setupApplied)toast('AI setup applied from link ✨');
 loadRemoteState();
 </script>
 </div>
