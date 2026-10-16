@@ -874,9 +874,15 @@ VIDEO MOTION: Use a cinematic slow push-in, subtle parallax, environmental parti
     }
 
     async function freeImage(prompt){
-      const url='https://image.pollinations.ai/prompt/'+encodeURIComponent(String(prompt||'').replace(/\s+/g,' ').slice(0,900))+'?width=1024&height=1536&model=flux&nologo=true&seed='+Math.floor(Math.random()*1000000);
+      const url='https://image.pollinations.ai/prompt/'+encodeURIComponent(String(prompt||'').replace(/\s+/g,' ').slice(0,900))+'?width=1024&height=1536&nologo=true&seed='+Math.floor(Math.random()*1000000);
       const response=await fetch(url,{cache:'no-store'});
-      if(!response.ok)throw new Error('the free preview generator replied '+response.status);
+      if(!response.ok){
+        const detail=await response.text().catch(()=>'');
+        let hint='';try{const j=JSON.parse(detail);hint=(j.error&&(j.error.message||j.error.code))||'';}catch{}
+        const limitError=new Error(hint||('the free preview generator replied '+response.status));
+        limitError.rateLimited=(response.status===402||response.status===429);
+        throw limitError;
+      }
       const blob=await response.blob();
       if(!/^image\//.test(blob.type||''))throw new Error('the free preview generator did not return an image (it may be rate-limited — wait a few seconds and retry)');
       return await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('the generated image could not be read'));reader.readAsDataURL(blob);});
@@ -927,6 +933,7 @@ VIDEO MOTION: Use a cinematic slow push-in, subtle parallax, environmental parti
           if(!src){
             try{src=await freeImage(prompt);via='free';}
             catch(freeErr){
+              if(freeErr&&freeErr.rateLimited)throw new Error('The free preview generator allows 1 image every 45 seconds per network. Retry in about 40 seconds — or add a free Google Gemini key in Settings for unlimited generations that also use your attached reference images.');
               const why=serviceError+' ['+((freeErr&&freeErr.message)||'the free preview generator failed')+']';
               throw new Error('NO_SERVICE:'+(state.lang==='ZH'?'这个副本现在无法生成图片：公司的 Game Engine 图片服务只存在于 Game Engine 站点版本，免费预览生成器也没有响应。海报、视觉素材、文案与导出在此都正常可用。请稍后重试，或在设置中添加 Google Gemini 密钥。':'Image generation is unreachable for this copy right now: the company Game Engine service only exists on the Game Engine site version, and the free preview generator did not answer. Posters, visual assets, copy and export all work here. Retry in a moment, or add a Google Gemini key in Settings.')+why);
             }
