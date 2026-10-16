@@ -875,20 +875,32 @@ VIDEO MOTION: Use a cinematic slow push-in, subtle parallax, environmental parti
       c.assetStatus='Generating';saveState();render();
       toast(state.lang==='ZH'?'正在通过 Game Engine AI 生成高质量视觉素材…':'Generating the high-quality visual asset through Game Engine AI…');
       try{
-        const response=await fetch('/api/image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,refs,quality:state.settings.imageQuality||'high'})});
-        const data=await response.json().catch(()=>({}));
-        if(!response.ok)throw new Error(data.error||'The company image service could not complete this request.');
-        const src=typeof data.b64_json==='string'?'data:image/png;base64,'+data.b64_json:data.image_url;
-        if(!src)throw new Error('The company image service returned no image.');
+        const cfg=providerConfig();
+        let src=null;
+        if(cfg.provider!=='Local Smart Generator'&&cfg.key){
+          src=cfg.provider==='Gemini'?await geminiImage(prompt,refs,cfg):await openAIImage(prompt,refs,cfg);
+        }else{
+          let serviceError='';
+          try{
+            const response=await fetch('/api/image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,refs,quality:state.settings.imageQuality||'high'})});
+            const data=await response.json().catch(()=>({}));
+            if(!response.ok)throw new Error(data.error||('image service replied '+response.status));
+            src=typeof data.b64_json==='string'?'data:image/png;base64,'+data.b64_json:data.image_url;
+            if(!src)throw new Error('image service returned no image');
+          }catch(err){serviceError=(err&&err.message)?' ['+err.message+']':'';}
+          if(!src)throw new Error('NO_SERVICE:'+(state.lang==='ZH'?'此副本没有 Game Engine 图片服务（GPT Image 2 只在公司的受保护服务器上运行）。海报、视觉素材、文案与导出在此都正常可用；如需 AI 生成图片，请使用 Game Engine 站点版本。':'This copy has no Game Engine image service (the studio’s GPT Image 2 runs on the company server). Posters, visual assets, copy and export all work here — for AI image generation use the Game Engine site version of the studio.')+serviceError);
+        }
         const compact=await compressGeneratedImage(src);
         c.aiImage=compact;
         c.imageVersions=[...(c.imageVersions||[]),{image:compact,prompt,createdAt:new Date().toISOString()}].slice(-4);
         c.assetStatus='Awaiting review';saveState();render();
         toast(state.lang==='ZH'?'视觉素材已生成，请审核后批准。':'Visual generated. Review it before approval.');
       }catch(error){
-        c.assetStatus='Generation failed';saveState();render();
-        const message=error instanceof Error?error.message:'The image request failed.';
-        toast((state.lang==='ZH'?'生成失败：':'Generation failed: ')+message);
+        const raw=error instanceof Error?error.message:'The image request failed.';
+        const noService=raw.indexOf('NO_SERVICE:')===0;
+        const message=noService?raw.slice(11).trim():raw;
+        c.assetStatus=noService?'Unavailable here':'Generation failed';saveState();render();
+        toast(noService?message:((state.lang==='ZH'?'生成失败：':'Generation failed: ')+message));
       }
     }
 
