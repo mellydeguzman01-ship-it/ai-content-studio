@@ -1796,6 +1796,8 @@ document.getElementById('file-input').addEventListener('change',e=>{
 });
 function selectedUpload(key){return (UPLOADS[key]||[]).find(u=>u.sel)}
 function selectedUploads(key){return (UPLOADS[key]||[]).filter(u=>u.sel)}
+  /* hero grid: EVERY selected upload is placed, up to the 12 the uploader accepts. 1 -> one hero, 2-3 -> one row, 4 -> 2x2, 5-9 -> 3 across, 10-12 -> 4 across. w = width of each image inside .p-heroes (its max-width is 88%), maxH = per-image height cap. */
+  function heroLayout(n){const cols=n<=3?Math.max(1,n):(n<=4?2:(n<=9?3:4));const rows=Math.max(1,Math.ceil(n/cols));const w=n===1?'54%':n===2?'38%':n===3?'28%':(cols===2?'40%':cols===3?'27%':'20.5%');const maxH=rows<=1?30:rows===2?15:rows===3?10:8;return{cols,rows,w,maxH}}
 /* company logo — embedded SVG recreation of the official GAME ENGINE logo.
    If a real logo.png file exists next to index.html it takes priority. */
 const LOGO_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 104" width="330" height="104"><defs><linearGradient id="gm" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#FFC93C"/><stop offset=".45" stop-color="#FF8A34"/><stop offset="1" stop-color="#FF5A4E"/></linearGradient></defs><g><rect x="30" y="8" width="13" height="13" rx="2" fill="#FF5A4E"/><rect x="14" y="15" width="9" height="9" rx="2" fill="#FFB020"/><rect x="45" y="20" width="10" height="10" rx="2" fill="#FF8A34"/><rect x="6" y="33" width="10" height="10" rx="2" fill="#FFC93C"/><rect x="24" y="30" width="14" height="14" rx="2" fill="#FF7030"/><rect x="42" y="46" width="8" height="8" rx="2" fill="#FFC93C"/><rect x="12" y="50" width="12" height="12" rx="2" fill="#FF8A34"/><rect x="30" y="58" width="10" height="10" rx="2" fill="#FF5A4E"/><rect x="5" y="66" width="8" height="8" rx="2" fill="#FF9C2E"/><rect x="22" y="74" width="12" height="12" rx="2" fill="#FFC93C"/><rect x="42" y="80" width="8" height="8" rx="2" fill="#FF6A3D"/><rect x="14" y="88" width="10" height="10" rx="2" fill="#FF8A34"/></g><text x="48" y="90" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="100" fill="url(#gm)" stroke="#FFFFFF" stroke-width="5" paint-order="stroke" font-style="italic">G</text><text x="152" y="48" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-style="italic" font-size="43" letter-spacing="1"><tspan fill="#EE3E23">G</tspan><tspan fill="#F6A818">A</tspan><tspan fill="#1D6FE8">M</tspan><tspan fill="#35A9F1">E</tspan></text><text x="152" y="94" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-style="italic" font-size="43" letter-spacing="1" fill="#FFFFFF">ENGINE</text></svg>`;
@@ -1900,12 +1902,12 @@ function buildPoster(){
   const idx=(state.headIdx+slide)%g.heads.length;
   const head=g.heads[idx];
   const orn=g.orn;
-  let ups=selectedUploads(state.game).slice(0,4);
+  let ups=selectedUploads(state.game);
   if(t==='carousel'&&ups.length)ups=[ups[slide%ups.length]];
   let hero;
   if(ups.length){
-    const wPct=ups.length===1?'54%':ups.length===2?'38%':ups.length===3?'28%':'36%';
-    hero=`<div class="p-heroes">${ups.map(u=>`<img class="p-char-img" style="width:${wPct}" src="${u.dataUrl}" alt="">`).join('')}</div>`;
+    const HL=heroLayout(ups.length);
+    hero=`<div class="p-heroes">${ups.map(u=>`<img class="p-char-img" style="width:${HL.w};max-height:${HL.maxH}%" src="${u.dataUrl}" alt="">`).join('')}</div>`;
   }else{
     hero=`<div class="p-char"${t==='gif'?' style="animation-duration:1.4s"':''}>${g.chars.length?g.chars[idx%g.chars.length]:g.e}</div>`;
   }
@@ -2227,17 +2229,14 @@ async function downloadPoster(){
   x.globalAlpha=1;
   /* hero — all selected uploaded assets */
   const slide=t==='carousel'?state.carIdx:0;
-  let ups=selectedUploads(c.game).slice(0,4);
+  let ups=selectedUploads(c.game);
   if(t==='carousel'&&ups.length)ups=[ups[slide%ups.length]];
   const heroY=H*0.34;
   if(ups.length){
     try{
       const imgs=await Promise.all(ups.map(u=>loadImg(u.dataUrl)));
-      if(imgs.length===1)drawImgFit(x,imgs[0],W/2,heroY,W*.62,H*.30);
-      else if(imgs.length===2){drawImgFit(x,imgs[0],W*.28,heroY,W*.40,H*.26);drawImgFit(x,imgs[1],W*.72,heroY,W*.40,H*.26)}
-      else if(imgs.length===3){drawImgFit(x,imgs[0],W*.20,heroY,W*.27,H*.24);drawImgFit(x,imgs[1],W*.50,heroY,W*.27,H*.24);drawImgFit(x,imgs[2],W*.80,heroY,W*.27,H*.24)}
-      else{drawImgFit(x,imgs[0],W*.30,heroY-H*.085,W*.37,H*.15);drawImgFit(x,imgs[1],W*.70,heroY-H*.085,W*.37,H*.15);drawImgFit(x,imgs[2],W*.30,heroY+H*.085,W*.37,H*.15);drawImgFit(x,imgs[3],W*.70,heroY+H*.085,W*.37,H*.15)}
-    }catch(err){}
+      const hc=heroLayout(imgs.length),cw=(W*0.84)/hc.cols,chh=(H*(hc.rows<=1?0.30:hc.rows===2?0.30:0.27))/hc.rows;
+      imgs.forEach((im,i)=>{const cx=W/2+((i%hc.cols)-(hc.cols-1)/2)*cw,cy2=heroY+(Math.floor(i/hc.cols)-(hc.rows-1)/2)*chh;drawImgFit(x,im,cx,cy2,cw*0.88,chh*0.86)});}catch(err){}
   }else{
     x.font='230px serif';x.textAlign='center';
     x.save();x.shadowColor='rgba(0,0,0,.45)';x.shadowBlur=30;x.shadowOffsetY=16;
@@ -2823,7 +2822,7 @@ function buildAIPrompt(){
   const cta=(((zh?CTAS_ZH:CTAS)[state.purpose])||'Play Now →').replace(' →','');
   const brief=(state.purpose==='Custom'&&$('#custom-brief').value.trim())?(' Creative brief: '+$('#custom-brief').value.trim()+'.'):'';
   const corporate=!!g.corporate;
-  const ups=selectedUploads(state.game).slice(0,3);
+  const ups=selectedUploads(state.game).slice(0,9);
   return 'Design a premium social media poster, 4:5 vertical, for '+(corporate?'the game studio "Game Engine"':'the mobile game "'+g.name+'"')+'. '
     +'Purpose: '+state.purpose+'.'+brief+' '
     +'Style: vibrant playful 3D cartoon illustration, professional marketing quality like a top mobile-game ad, rich detailed background scene, glossy lighting, bold rounded typography with outlines. '
@@ -2864,7 +2863,7 @@ async function openaiGenerate(prompt,ups){
         const blobs=[];
         if(BRAND.logo)blobs.push(dataUrlToBlob(BRAND.logo));
         ups.forEach(u=>blobs.push(dataUrlToBlob(u.dataUrl)));
-        blobs.slice(0,4).forEach((b,i)=>fd.append('image[]',b,'asset'+i+'.png'));
+        blobs.slice(0,12).forEach((b,i)=>fd.append('image[]',b,'asset'+i+'.png'));
         r=await fetch('https://api.openai.com/v1/images/edits',{method:'POST',headers:{'Authorization':'Bearer '+AI.okey},body:fd});
       }else{
         r=await fetch('https://api.openai.com/v1/images/generations',{method:'POST',
@@ -2883,7 +2882,7 @@ async function openaiGenerate(prompt,ups){
 async function generateAIPoster(){
   if(!aiReady())return null;
   const prompt=buildAIPrompt();
-  const ups=selectedUploads(state.game).slice(0,3);
+  const ups=selectedUploads(state.game).slice(0,9);
   return AI.provider==='openai'?openaiGenerate(prompt,ups):geminiGenerate(prompt,ups);
 }
 function aiErrHint(){
