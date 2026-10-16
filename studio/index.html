@@ -878,7 +878,16 @@ VIDEO MOTION: Use a cinematic slow push-in, subtle parallax, environmental parti
         const cfg=providerConfig();
         let src=null;
         if(cfg.provider!=='Local Smart Generator'&&cfg.key){
-          src=cfg.provider==='Gemini'?await geminiImage(prompt,refs,cfg):await openAIImage(prompt,refs,cfg);
+          const _gem=cfg.provider==='Gemini';
+          try{
+            src=_gem?await geminiImage(prompt,refs,cfg):await openAIImage(prompt,refs,cfg);
+          }catch(_err){
+            const _m=String((_err&&_err.message)||_err||'');
+            if(!_gem&&/model|not found|does not exist|unsupported/i.test(_m)&&!(/^gpt-image-1$/i.test(String(cfg.model||'')))){
+              toast('Model "'+(cfg.model||'gpt-image-2')+'" is not available on this key — retrying with gpt-image-1…');
+              src=await openAIImage(prompt,refs,Object.assign({},cfg,{model:'gpt-image-1'}));
+            }else throw _err;
+          }
         }else{
           let serviceError='';
           try{
