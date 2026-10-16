@@ -915,11 +915,21 @@ VIDEO MOTION: Use a cinematic slow push-in, subtle parallax, environmental parti
             src=cfg.provider==='Gemini'?await geminiImage(prompt,refs,cfg):await openAIImage(prompt,refs,cfg);
           }catch(_err){
             const _m=String((_err&&_err.message)||_err||'');
-            if(cfg.provider!=='Gemini'&&/model|not found|does not exist|unsupported/i.test(_m)&&!/^gpt-image-1$/i.test(String(cfg.model||''))){
+            if(cfg.provider==='Gemini'){
+              throw new Error(imageErrorHint('Gemini',_m));
+            }
+            if(/model|not found|does not exist|unsupported/i.test(_m)&&!/^gpt-image-1$/i.test(String(cfg.model||''))){
               toast('Model "'+(cfg.model||'gpt-image-2')+'" is not available on this key — retrying with gpt-image-1…');
               src=await openAIImage(prompt,refs,Object.assign({},cfg,{model:'gpt-image-1'}));
-            }else throw new Error(imageErrorHint(cfg.provider,_m));
-          }
+            }else if(/failed to fetch|networkerror|load failed|err_failed|network error/i.test(_m)){
+              const hint=imageErrorHint('OpenAI',_m);
+              try{
+                src=await freeImage(prompt);via='free';
+                toast('OpenAI blocks calls from a web page, so this generated with the free preview generator instead. Add a free Google Gemini key in Settings to generate from your own reference images.');
+              }catch(fbErr){
+                throw new Error(hint+(fbErr&&fbErr.rateLimited?' The free preview generator is rate-limited right now too (1 image every 45 seconds) — retry in about 40 seconds.':''));
+              }
+            }else throw new Error(imageErrorHint('OpenAI',_m));          }
         }else{
           let serviceError='';
           try{
