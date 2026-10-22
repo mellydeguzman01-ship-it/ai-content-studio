@@ -1039,7 +1039,16 @@ ${blocks}
       const p=calPayload(c);
       if(!state.calPending.some(x=>x.content_id===p.content_id))state.calPending.push(p);
       state.calPending=state.calPending.slice(-25);
-      c.calendarSyncError=String(reason||'Bridge unreachable');
+      let msg=String(reason||'Bridge unreachable');
+      /* Chrome will not let a public https page touch 127.0.0.1 until this
+         origin is allowed once (address-bar controls → Local network → Allow).
+         "Failed to fetch" on its own says nothing useful, so name the click. */
+      if(/failed to fetch|networkerror|load failed/i.test(msg)){
+        msg=(state.lang==='ZH')
+          ?'浏览器拦截了本地日历桥接。点地址栏左侧的图标 → 本地网络 → 允许，然后按 ↻ Calendar sync。'
+          :'Chrome blocked the local calendar bridge. Open the site controls (icon left of the address) → Local network → Allow, then press ↻ Calendar sync.';
+      }
+      c.calendarSyncError=msg;
     }
     async function syncApprovedContent(c,opts){
       if(!c)return false;
