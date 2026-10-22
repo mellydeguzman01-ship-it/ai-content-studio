@@ -731,7 +731,7 @@ VIDEO MOTION: Use a cinematic slow push-in, subtle parallax, environmental parti
       const visualAssets=contentAssets(c), compliance=c.compliance||{status:'REVIEW REQUIRED',checks:[]},versions=c.imageVersions||[];
       return `<div><div class="card-title"><div><h2>${esc(c.headline)}</h2><p>${esc(c.subject)} · ${esc(tr(c.format))} · ${formatDateTime(c.createdAt)}</p></div><span class="pill ${compliance.status==='READY'?'ready':'review'}">${tr(compliance.status)}</span></div>
         ${c.format==='Article'?renderArticleSheet(c):''}<div class="poster"${c.format==='Article'?' style="display:none"':''}><div class="poster-copy">${renderPosterArt(c)}<div class="poster-kicker">${esc(c.subject)} · ${esc(tr(c.purpose))}</div><h2>${esc(c.posterHeadline||c.headline)}</h2><p>${esc(c.posterBody)}</p><span class="poster-cta">${esc(c.cta)}</span><div class="poster-footer"><span>${tr('21+ · For entertainment purposes only · Play responsibly')}</span>${state.brand.logo?`<img src="${state.brand.logo}" alt="Logo">`:`<strong>${esc(state.settings.brandName)}</strong>`}</div></div></div>
-        <div class="asset-review"><div class="asset-review-head"><div><h3>AI asset review</h3><p class="muted" style="font-size:11px;margin-top:4px">Generate, inspect and approve the visual before publishing.</p></div><span class="pill ${c.assetStatus==='Approved'?'ready':'review'}">${tr(c.assetStatus||'Not generated')}</span>${c.calendarSync?`<span class="pill ready" style="margin-left:6px" title="Marketing Content Calendar ${esc(c.calendarSync.record_id||'')} — synced automatically">✓ Marketing Calendar</span>`:''}${!c.calendarSync&&c.calendarSyncError?`<button class="ghost-button small" style="margin-left:6px" data-action="retry-calendar-sync" title="${esc(c.calendarSyncError)}">↻ Calendar sync</button>`:''}${c.aiImage&&c.assetVia?`<span class="pill ${c.assetVia==='free'?'review':'ready'}" style="margin-left:6px" title="${c.assetVia==='free'?'Free preview engine: lower detail, ignores reference images':'Generated with '+(c.assetVia==='gemini'?'Google Gemini':c.assetVia==='service'?'the company image service':c.assetVia==='company'?'the company GPT Image 2 gateway (llm.game-engine.com)':'OpenAI')}">${c.assetVia==='free'?'Free engine':c.assetVia==='gemini'?'Gemini':c.assetVia==='service'?'Company service':c.assetVia==='company'?'Company GPT Image 2':'OpenAI'}</span>`:''}</div>${c.assetError?`<div class="notice warning" style="margin:0 0 12px"><strong style="display:block;margin-bottom:7px">Image generation message — the exact reply from the provider</strong><textarea readonly onclick="this.select()" style="width:100%;min-height:104px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;line-height:1.55;resize:vertical">${esc(c.assetError)}</textarea><div class="form-actions" style="margin-top:8px"><button class="ghost-button small" data-action="copy-asset-error">Copy message</button><button class="ghost-button small" data-action="clear-asset-error">Hide</button></div></div>`:''}${c.aiImage&&c.assetVia==='free'?`<div class="notice warning" style="margin:0 0 12px"><strong style="display:block;margin-bottom:5px">${state.lang==='ZH'?'当前使用免费预览引擎':'Rendered by the free preview engine'}</strong>${state.lang==='ZH'?'免费引擎细节有限，且会忽略你上传的参考图。要得到海报级质感，请在设置中填入 Google Gemini 密钥后重新生成。':'Free preview renders at lower detail, ignores your reference images and stamps a small pollinations.ai mark in the corner. For poster-grade key art, add a Google Gemini key in Settings and regenerate.'}</div>`:''}<div class="asset-review-grid"><div class="ai-preview">${c.aiImage?`<img src="${c.aiImage}" alt="Generated campaign asset">`:visualAssets.length?`<div class="asset-reference-preview">${visualAssets.map((src,index)=>`<img src="${src}" alt="Selected reference ${index+1}">`).join('')}</div>`:`<div class="ai-preview-empty"><strong>Generate a production-quality campaign image</strong><span>Your editable prompt and selected reference assets will be sent only to the protected Game Engine service.</span></div>`}</div><div class="review-tools">${c.refsDropped>0?`<div class="notice warning" style="margin:0 0 12px"><strong style="display:block;margin-bottom:5px">${state.lang==='ZH'?('参考图上限：已发送 5 张，另有 '+c.refsDropped+' 张未发送'):('Reference limit: 5 sent, '+c.refsDropped+' held back')}</strong>${state.lang==='ZH'?'公司的 GPT Image 2 网关（ChatGPT OAuth）每次最多接受 5 张参考图。发送顺序：风格参考 → 已选素材 → 标志。其余素材仍保存在工作室里，取消勾选不需要的图片即可改变发送的前 5 张。':'The company GPT Image 2 gateway (ChatGPT OAuth) accepts 5 reference images per request. Order: style reference, then your selected assets, then the logo. Every other asset stays attached here — untick the ones you do not need to change which five are sent.'}</div>`:''}<details class="review-prompt"><summary><strong style="color:var(--text)">Creative prompt</strong><span class="rp-tag">${state.lang==='ZH'?'自动生成 · 点击查看':'auto-built · tap to view'}</span></summary><div class="review-status">${esc(c.imagePrompt||c.visualPrompt)}</div></details><div class="field"><label>ASSET REVISION PROMPT</label><textarea id="asset-revision-note" placeholder="Example: Keep the exact character, increase the rainy atmosphere, simplify the background and leave more space for the headline."></textarea></div><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="primary-button small" data-action="generate-ai-image">${c.aiImage?'↻ Revise & regenerate':'✦ Generate AI image'}</button>${c.aiImage?`<button class="ghost-button small" data-action="approve-asset">✓ Approve</button><button class="ghost-button small" data-action="download-ai-asset">↓ Download</button><button class="danger-button small" data-action="reject-asset">Request revision</button>`:''}</div>${versions.length?`<div><label>VERSION HISTORY</label><div class="version-strip" style="margin-top:7px">${versions.map((v,i)=>`<button class="version-thumb ${c.aiImage===v.image?'active':''}" data-action="select-image-version" data-id="${i}" title="Version ${i+1}"><img src="${v.image}" alt="Version ${i+1}"></button>`).join('')}</div></div>`:''}</div></div></div>
+        <div class="asset-review"><div class="asset-review-head"><div><h3>AI asset review</h3><p class="muted" style="font-size:11px;margin-top:4px">Generate, inspect and approve the visual before publishing.</p></div><span class="pill ${c.assetStatus==='Approved'?'ready':'review'}">${tr(c.assetStatus||'Not generated')}</span>${c.calendarSync?`<span class="pill ready" style="margin-left:6px" title="Marketing Content Calendar ${esc(c.calendarSync.record_id||'')} — synced automatically">✓ Marketing Calendar</span>`:''}${!c.calendarSync&&c.calendarSyncError?`<button class="ghost-button small" style="margin-left:6px" data-action="retry-calendar-sync" title="${esc(c.calendarSyncError)}">↻ Calendar sync</button>`:''}${c.aiImage&&c.assetVia?`<span class="pill ${c.assetVia==='free'?'review':'ready'}" style="margin-left:6px" title="${c.assetVia==='free'?'Free preview engine: lower detail, ignores reference images':'Generated with '+(c.assetVia==='gemini'?'Google Gemini':c.assetVia==='service'?'the company image service':c.assetVia==='company'?'the company GPT Image 2 gateway (llm.game-engine.com)':'OpenAI')}">${c.assetVia==='free'?'Free engine':c.assetVia==='gemini'?'Gemini':c.assetVia==='service'?'Company service':c.assetVia==='company'?'Company GPT Image 2':'OpenAI'}</span>`:''}</div>${c.assetError?`<div class="notice warning" style="margin:0 0 12px"><strong style="display:block;margin-bottom:7px">Image generation message — the exact reply from the provider</strong><textarea readonly onclick="this.select()" style="width:100%;min-height:104px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;line-height:1.55;resize:vertical">${esc(c.assetError)}</textarea><div class="form-actions" style="margin-top:8px"><button class="ghost-button small" data-action="copy-asset-error">Copy message</button><button class="ghost-button small" data-action="clear-asset-error">Hide</button></div></div>`:''}${c.aiImage&&c.assetVia==='free'?`<div class="notice warning" style="margin:0 0 12px"><strong style="display:block;margin-bottom:5px">${state.lang==='ZH'?'当前使用免费预览引擎':'Rendered by the free preview engine'}</strong>${state.lang==='ZH'?'免费引擎细节有限，且会忽略你上传的参考图。要得到海报级质感，请在设置中填入 Google Gemini 密钥后重新生成。':'Free preview renders at lower detail, ignores your reference images and stamps a small pollinations.ai mark in the corner. For poster-grade key art, add a Google Gemini key in Settings and regenerate.'}</div>`:''}<div class="asset-review-grid"><div class="ai-preview">${c.aiImage?`<img src="${c.aiImage}" alt="Generated campaign asset">`:visualAssets.length?`<div class="asset-reference-preview">${visualAssets.map((src,index)=>`<img src="${src}" alt="Selected reference ${index+1}">`).join('')}</div>`:`<div class="ai-preview-empty"><strong>Generate a production-quality campaign image</strong><span>Your editable prompt and selected reference assets will be sent only to the protected Game Engine service.</span></div>`}</div><div class="review-tools">${(c.refsUsed>0&&c.assetVia&&c.assetVia!=='free')?`<div class="muted" style="font-size:11px;margin:0 0 10px;display:flex;align-items:center;gap:6px" title="Every approved asset that was ticked in the library went into this request"><span style="color:#3fbf7f">✓</span>${state.lang==='ZH'?('全部 '+c.refsUsed+' 张已批准素材都已用于本次生成'):('All '+c.refsUsed+' approved assets were used in this generation')}</div>`:''}<details class="review-prompt"><summary><strong style="color:var(--text)">Creative prompt</strong><span class="rp-tag">${state.lang==='ZH'?'自动生成 · 点击查看':'auto-built · tap to view'}</span></summary><div class="review-status">${esc(c.imagePrompt||c.visualPrompt)}</div></details><div class="field"><label>ASSET REVISION PROMPT</label><textarea id="asset-revision-note" placeholder="Example: Keep the exact character, increase the rainy atmosphere, simplify the background and leave more space for the headline."></textarea></div><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="primary-button small" data-action="generate-ai-image">${c.aiImage?'↻ Revise & regenerate':'✦ Generate AI image'}</button>${c.aiImage?`<button class="ghost-button small" data-action="approve-asset">✓ Approve</button><button class="ghost-button small" data-action="download-ai-asset">↓ Download</button><button class="danger-button small" data-action="reject-asset">Request revision</button>`:''}</div>${versions.length?`<div><label>VERSION HISTORY</label><div class="version-strip" style="margin-top:7px">${versions.map((v,i)=>`<button class="version-thumb ${c.aiImage===v.image?'active':''}" data-action="select-image-version" data-id="${i}" title="Version ${i+1}"><img src="${v.image}" alt="Version ${i+1}"></button>`).join('')}</div></div>`:''}</div></div></div>
         ${renderVideoStudio(c)}
         <div class="section-head" style="margin-top:18px"><div><h3>Generated content</h3><p>Copy, revise or export the package.</p></div><button class="ghost-button small" data-action="regenerate">↻ Regenerate</button></div>
         <div class="result-section"><div class="result-label"><span>Caption</span><button class="ghost-button small" data-action="copy" data-copy="caption">Copy</button></div><div class="output-box" id="output-caption">${esc(c.caption)}</div></div>
@@ -1005,7 +1005,26 @@ ${blocks}
        approval posts one small payload and the row appears in the Base table
        the dashboard calendar reads. If the bridge is down the payload is queued
        in localStorage and retried on the next load; nothing is ever lost. */
-    const CAL_BRIDGE='http://127.0.0.1:8791';
+    /* The studio is served from https (GitHub Pages), and Chrome refuses to let
+       an https page POST to http://127.0.0.1 — that is the mixed-content wall
+       behind the old "Failed to fetch". The bridge therefore also listens on
+       https://127.0.0.1:8792 with a leaf signed by the local
+       "Game Engine Local Bridge CA", which is trusted on this PC, so the
+       deployed page posts there first. The http port stays as a fallback for a
+       local preview where the CA may not be trusted yet. */
+    const CAL_BRIDGES=['https://127.0.0.1:8792','http://127.0.0.1:8791'];
+    async function calPost(payload){
+      let lastErr=null;
+      for(const base of CAL_BRIDGES){
+        try{
+          const r=await fetch(base+'/ingest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+          const d=await r.json();
+          if(!r.ok||!d.ok)throw new Error(d.error||('HTTP '+r.status));
+          return d;
+        }catch(e){lastErr=e;}
+      }
+      throw lastErr||new Error('Bridge unreachable');
+    }
     const CAL_PLATFORM_MAP={X:'Twitter',Twitter:'Twitter'};
     function calPayload(c){
       const img=(c&&typeof c.aiImage==='string'&&c.aiImage.startsWith('data:')&&c.aiImage.length<8000000)?c.aiImage:null;
@@ -1027,9 +1046,7 @@ ${blocks}
       opts=opts||{};
       const payload=calPayload(c);
       try{
-        const r=await fetch(CAL_BRIDGE+'/ingest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-        const d=await r.json();
-        if(!r.ok||!d.ok)throw new Error(d.error||('HTTP '+r.status));
+        const d=await calPost(payload);
         c.calendarSync={record_id:d.record_id,at:new Date().toISOString(),duplicate:!!d.duplicate};
         c.calendarSyncError=null;
         if(Array.isArray(state.calPending))state.calPending=state.calPending.filter(x=>x.content_id!==c.id);
@@ -1049,10 +1066,8 @@ ${blocks}
       const keep=[];let ok=0;
       for(const p of q){
         try{
-          const r=await fetch(CAL_BRIDGE+'/ingest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
-          const d=await r.json();
-          if(r.ok&&d.ok){ok++;const c=state.contents.find(x=>x.id===p.content_id);if(c){c.calendarSync={record_id:d.record_id,at:new Date().toISOString(),duplicate:!!d.duplicate};c.calendarSyncError=null;}}
-          else keep.push(p);
+          const d=await calPost(p);
+          ok++;const c=state.contents.find(x=>x.id===p.content_id);if(c){c.calendarSync={record_id:d.record_id,at:new Date().toISOString(),duplicate:!!d.duplicate};c.calendarSyncError=null;}
         }catch(e){keep.push(p);}
       }
       state.calPending=keep;saveState();render();
@@ -1175,11 +1190,52 @@ ${blocks}
     function imageErrorHint(provider,raw){
       const message=String(raw||'').trim();
       const net=/failed to fetch|networkerror|load failed|err_failed|network error|fetch failed/i.test(message);
-      if(provider==='GameEngine'&&/at most 5 reference images/i.test(message))return 'Only 5 reference images can go to GPT Image 2 at a time. This build sends the first 5 (style reference, then your selected assets, then the logo) automatically — untick the assets you do not need and try again. ['+message+']';
+      if(provider==='GameEngine'&&/at most 5 reference images/i.test(message))return 'The company model turned the reference images down this time — but every approved asset is already packed into labelled sheets (REF 1, REF 2, …) so all of them travel inside the request. Press Generate again to retry. ['+message+']';
       if(provider==='GameEngine')return 'The company GPT Image 2 request failed: '+message+'  (endpoint https://llm.game-engine.com/v1) ';
       if(provider==='OpenAI'&&net)return 'OpenAI cannot be called from a web page: its server sends no CORS headers, so the browser blocks the request before it is sent. No OpenAI key can fix that on a static copy. Set PROVIDER to “Google — Gemini image” (a free Google AI Studio key works here) or use the Game Engine site version of the studio. ['+message+']';
       if(provider==='Gemini'&&net)return 'The browser could not reach Google. Check the internet connection and try again. ['+message+']';
       return message||'The image request failed.';
+    }
+    function loadImageEl(src){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>rej(new Error('a reference image could not be read'));im.src=src;});}
+    /* 2026-10-22 (user): every approved visual asset must reach the model — no
+       "held back" references. The company GPT Image 2 gateway (ChatGPT OAuth)
+       still refuses more than 5 image parts per request, so when the user
+       attaches more than the request can carry, the extras are composited into
+       labelled grid sheets (REF 1, REF 2, …) instead of being dropped. One
+       sheet occupies one image slot, so all attached assets still reach the
+       model. */
+    async function packReferenceSheets(sources,slots,startIndex){
+      const per=Math.max(2,Math.ceil(sources.length/Math.max(1,slots)));
+      const CS=512,PAD=18,LBL=34,sheets=[];
+      let n=startIndex||1;
+      for(let i=0;i<sources.length;i+=per){
+        const group=sources.slice(i,i+per);
+        const cols=group.length<=3?group.length:(group.length===4?2:3);
+        const rows=Math.ceil(group.length/cols);
+        const cv=document.createElement('canvas');
+        cv.width=PAD+cols*(CS+PAD);cv.height=PAD+rows*(CS+LBL+PAD);
+        const g=cv.getContext('2d');
+        g.fillStyle='#0b0e13';g.fillRect(0,0,cv.width,cv.height);
+        for(let k=0;k<group.length;k++){
+          const col=k%cols,row=Math.floor(k/cols);
+          const x=PAD+col*(CS+PAD),y=PAD+row*(CS+LBL+PAD);
+          g.fillStyle='#151a22';g.fillRect(x,y+LBL,CS,CS);
+          let im=null;try{im=await loadImageEl(group[k]);}catch(e){}
+          if(im){
+            const s=Math.min(CS/im.width,CS/im.height),w=Math.round(im.width*s),h=Math.round(im.height*s);
+            g.drawImage(im,x+Math.round((CS-w)/2),y+LBL+Math.round((CS-h)/2),w,h);
+          }
+          const lbl='REF '+n;
+          g.font='600 22px "Helvetica Neue",Arial,sans-serif';
+          const tw=Math.ceil(g.measureText(lbl).width);
+          g.fillStyle='#2a3340';g.fillRect(x,y,tw+22,Math.max(20,LBL-8));
+          g.fillStyle='#e7eef9';g.fillText(lbl,x+11,y+(LBL-8)-8);
+          g.strokeStyle='rgba(120,160,210,.35)';g.lineWidth=2;g.strokeRect(x+.5,y+LBL+.5,CS-1,CS-1);
+          n++;
+        }
+        sheets.push(cv.toDataURL('image/jpeg',.92));
+      }
+      return {sheets,per};
     }
     async function generateAIImage(){
       const c=currentResult();
@@ -1189,18 +1245,30 @@ ${blocks}
       const layout=state.lang==='ZH'
         ? '排版参考：标题“'+c.posterHeadline+'”；行动号召“'+c.cta+'”。不要在图片内生成长段落，请留出干净区域供应用叠加准确文字。'+(revision?' 修改要求：'+revision:'')
         : 'Campaign copy for layout reference only: Headline “'+c.posterHeadline+'”; CTA “'+c.cta+'”. Do not render long paragraphs inside the image. Leave clean text-safe zones so the app can overlay exact copy.'+(revision?' Revision request: '+revision:'');
-      const prompt=(c.imagePrompt||c.visualPrompt)+'\n\n'+layout;
+      let prompt=(c.imagePrompt||c.visualPrompt)+'\n\n'+layout;
       const cfg=providerConfig();
-      /* 2026-10-22 (user): attach as many reference images as you like — but the
-         company GPT Image 2 gateway runs on ChatGPT OAuth, which answers a 400
-         ("at most 5 reference images") for anything above five. Cap the request
-         instead of failing the generation. Order is style reference, then the
-         selected assets in selection order, then the logo, so the first five are
-         the ones that matter; the rest stay selected in the studio. */
+      /* 2026-10-22 (user): nothing may be held back — every approved visual
+         asset the user attached must reach the model. The company GPT Image 2
+         gateway runs on ChatGPT OAuth and refuses more than five image parts,
+         so instead of dropping the extras they are composited into labelled
+         grid sheets (REF 1, REF 2, …). Style reference keeps slot 1 and the
+         logo keeps the last slot; the picked assets fill what is left and are
+         packed into the fewest sheets that fit. */
       const REF_CAP=cfg.provider==='GameEngine'?5:16;
-      const refs=refsAll.slice(0,REF_CAP);
-      const refsDropped=Math.max(0,refsAll.length-REF_CAP);
-      c.refsDropped=refsDropped;
+      const headRefs=state.styleRef?[state.styleRef]:[];
+      const tailRefs=state.brand&&state.brand.logo?[state.brand.logo]:[];
+      const assetRefs=selectedAssets().map(a=>a.data);
+      const avail=Math.max(1,REF_CAP-headRefs.length-tailRefs.length);
+      let assetPayload=assetRefs,packInfo=null;
+      if(assetRefs.length>avail){
+        const packed=await packReferenceSheets(assetRefs,avail,1);
+        assetPayload=packed.sheets;
+        packInfo={count:assetRefs.length,sheets:packed.sheets.length,per:packed.per};
+      }
+      const refs=[...headRefs,...assetPayload,...tailRefs];
+      c.refsDropped=0;c.refsPacked=packInfo;c.refsUsed=assetRefs.length;
+      const sheetNote=packInfo?('\n\nReference sheets: all '+packInfo.count+' approved assets are supplied on '+packInfo.sheets+' labelled grid sheet(s) (REF 1, REF 2, …). Treat every labelled cell as its own separate approved asset: reproduce each character exactly as shown inside its own cell, keep their outfits and props, and do not merge two different characters into one.'):'';
+      prompt+=sheetNote;
       const usesKey=!!cfg.key&&cfg.provider!=='free';
       c.assetStatus='Generating';saveState();render();
       toast(usesKey?(cfg.provider==='Gemini'?'Generating the visual asset with your Google Gemini key…':(cfg.provider==='GameEngine'?'Generating with the company GPT Image 2 model…':'Generating the visual asset with your OpenAI key…')):'Generating the visual asset with the free preview generator…');
