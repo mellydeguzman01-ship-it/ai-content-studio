@@ -307,7 +307,7 @@
         <button class="brand-mark" data-action="upload-logo" title="Upload logo"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Brand logo"></button>
         <div class="brand-copy"><strong>AI Content Studio</strong><span>Game Engine · Content workspace</span></div>
       </div>
-      <nav class="nav" id="nav"><button data-nav="dashboard" class=""><span class="nav-icon">⌂</span><span>Dashboard</span></button><button data-nav="generate" class="active"><span class="nav-icon">✦</span><span>Generate</span></button><button data-nav="calendar" class=""><span class="nav-icon">▦</span><span>Calendar</span></button><button data-nav="library" class=""><span class="nav-icon">▤</span><span>Library</span></button><button data-nav="assets" class=""><span class="nav-icon">◈</span><span>Brand Assets</span></button><button data-nav="templates" class=""><span class="nav-icon">✚</span><span>Templates</span></button><button data-nav="analytics" class=""><span class="nav-icon">◒</span><span>Analytics</span></button><button data-nav="settings" class=""><span class="nav-icon">⚙</span><span>Settings</span></button></nav>
+      <nav class="nav" id="nav"><button data-nav="generate" class="active"><span class="nav-icon">✦</span><span>Generate</span></button><button data-nav="library" class=""><span class="nav-icon">▤</span><span>Library</span></button><button data-nav="assets" class=""><span class="nav-icon">◈</span><span>Brand Assets</span></button><button data-nav="templates" class=""><span class="nav-icon">✚</span><span>Templates</span></button><button data-nav="settings" class=""><span class="nav-icon">⚙</span><span>Settings</span></button></nav>
       <div class="sidebar-bottom">
         <div class="mini-status"><span><i class="dot"></i>Local generator</span><span id="saved-status" role="status" aria-live="polite" title="">Saved</span></div>
         <button class="ghost-button small" data-action="upload-logo">＋ Upload brand logo</button>
@@ -523,9 +523,8 @@ VIDEO MOTION: Use a cinematic slow push-in, subtle parallax, environmental parti
     const PERSISTENCE_STORE = 'app_state';
     const PERSISTENCE_RECORD = 'current';
     const NAV = [
-      ['dashboard','⌂','Dashboard'], ['generate','✦','Generate'], ['calendar','▦','Calendar'],
-      ['library','▤','Library'], ['assets','◈','Brand Assets'], ['templates','✚','Templates'],
-      ['analytics','◒','Analytics'], ['settings','⚙','Settings']
+      ['generate','✦','Generate'],
+      ['library','▤','Library'], ['assets','◈','Brand Assets'], ['templates','✚','Templates'], ['settings','⚙','Settings']
     ];
     const GAME_PROFILES = {
       'Banana Craze': { emoji:'🍌', color:'#d8ff4f', hook:'bright tropical energy', detail:'colorful bonus features and playful monkey-king characters', visual:'sunny tropical arcade scene with bold yellow, green and deep purple accents' },
@@ -553,7 +552,7 @@ VIDEO MOTION: Use a cinematic slow push-in, subtle parallax, environmental parti
       { id:'launch', icon:'🚀', title:'Feature Update', desc:'Announce a game feature with clear, safe language.', subject:'Banana Craze', purpose:'Feature Update', tone:'Informative', brief:'Highlight bonus features and the improved experience without guaranteed-outcome language.' }
     ];
     const DEFAULT_STATE = {
-      view:'dashboard', lang:'EN', updatedAt:null,
+      view:'generate', lang:'EN', updatedAt:null,
       brand:{logo:null, background:null}, assets:[], contents:[], calendar:[], calPending:[], styleRef:null,
       settings:{imageModel:'gpt-image-2', imageQuality:'high', brandName:'Game Engine', tagline:'Game Everywhere'},
       draft:{subjectType:'game', subject:'Banana Craze', purpose:'Product Spotlight', platforms:['Facebook','Instagram','TikTok'], format:'Full Package', tone:'Premium', style:'cinematic3d', brief:'', imagePrompt:'', promptManual:false, date:'', time:'10:00'}
@@ -590,7 +589,11 @@ VIDEO MOTION: Use a cinematic slow push-in, subtle parallax, environmental parti
 
     function normalizeState(saved){
       const base=structuredClone(DEFAULT_STATE),value=saved&&typeof saved==='object'?saved:{};
-      return {...base,...value,brand:{...base.brand,...(value.brand||{})},settings:{...base.settings,...(value.settings||{})},draft:{...base.draft,...(value.draft||{})},assets:Array.isArray(value.assets)?value.assets:[],contents:Array.isArray(value.contents)?value.contents:[],calendar:Array.isArray(value.calendar)?value.calendar:[],calPending:Array.isArray(value.calPending)?value.calPending:[]};
+      const next={...base,...value,brand:{...base.brand,...(value.brand||{})},settings:{...base.settings,...(value.settings||{})},draft:{...base.draft,...(value.draft||{})},assets:Array.isArray(value.assets)?value.assets:[],contents:Array.isArray(value.contents)?value.contents:[],calendar:Array.isArray(value.calendar)?value.calendar:[],calPending:Array.isArray(value.calPending)?value.calPending:[]};
+      // Only the views still present in the nav are reachable; an older saved view (dashboard,
+      // calendar, analytics) falls back to the content generator instead of a blank page.
+      if(!NAV.some(([id])=>id===next.view))next.view='generate';
+      return next;
     }
     function loadState(){
       try {
