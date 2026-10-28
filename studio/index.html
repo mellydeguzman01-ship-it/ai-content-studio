@@ -340,6 +340,16 @@
     .figma-name{flex:1;font-size:13px;font-weight:600}
     .figma-node{font-size:11px;opacity:.62;font-variant-numeric:tabular-nums}
     .figma-pull{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line,#2a3344)}
+    .figma-browse{margin-top:12px;border:1px solid var(--line,#2a3344);border-radius:12px;padding:12px;background:rgba(184,255,61,.03)}
+    .figma-browse-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;margin-bottom:10px}
+    .figma-browse-list{max-height:270px;overflow:auto;display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line,#2a3344);padding-top:8px}
+    .figma-pick{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:9px;cursor:pointer;font-size:12.5px;transition:background .15s}
+    .figma-pick:hover{background:rgba(255,255,255,.05)}
+    .figma-pick.on{background:rgba(184,255,61,.1)}
+    .figma-box{width:15px;height:15px;flex:0 0 15px;border:1px solid var(--line,#48546b);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;color:#0b0f16}
+    .figma-pick.on .figma-box{background:var(--lime,#b8ff3d);border-color:var(--lime,#b8ff3d)}
+    .figma-pick-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .figma-pick-page{font-size:10.5px;opacity:.55;font-variant-numeric:tabular-nums;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -1243,14 +1253,116 @@ ${blocks}
        url:'https://www.figma.com/design/MciVH0UGVa5OVqm2TpauSJ/Entry-Logo?node-id=465-1551'}
     ];
     function figmaCard(){
-      const row=s=>`<a class="figma-row" href="${s.url}" target="_blank" rel="noopener"><span class="figma-dot">\u25c8</span><span class="figma-name">${esc(s.name)}</span><span class="figma-node">node ${s.node.replace(':','-')} \u2197</span></a>`;
+      const row=s=>`<div class="figma-row"><a href="${s.url}" target="_blank" rel="noopener" class="figma-dot" title="Open in Figma">\u25c8</a><a href="${s.url}" target="_blank" rel="noopener" class="figma-name" style="text-decoration:none;color:inherit">${esc(s.name)}</a><span class="figma-node">${s.file.slice(0,6)}\u2026 \u2197</span><button class="ghost-button small" data-action="figma-browse" data-file="${s.file}" data-name="${esc(s.name)}">Browse frames</button></div>`;
       return `<div class="card" style="margin-bottom:16px"><div class="card-title"><div><h2>Figma element sources</h2><p>Pull a frame straight into the asset gallery \u2014 the AI then preserves that exact artwork.</p></div><span class="pill">${FIGMA_SOURCES.length} files</span></div>
       <div class="figma-list">${FIGMA_SOURCES.map(row).join('')}</div>
+      ${figmaBrowsePanel()}
       <div class="figma-pull">
         <div class="field"><label>FIGMA PERSONAL ACCESS TOKEN</label><input id="figma-token" type="password" placeholder="figd_\u2026 (stored only in this browser)" value="${esc(state.settings.figmaToken||'')}"><div class="muted" style="font-size:11px;line-height:1.7;margin-top:8px">Where to get it: open <a href="https://www.figma.com/settings" target="_blank" rel="noopener" style="color:var(--lime,#b8ff3d);text-decoration:underline">figma.com/settings</a> &rarr; <strong>Security</strong> tab &rarr; <strong>Personal access tokens</strong> &rarr; <strong>Generate new token</strong> &rarr; Expiration <em>any</em> &rarr; tick <strong>File content: Read only</strong> (also tick <strong>Dev resources: Read</strong> if you want dev assets) &rarr; <strong>Generate token</strong> &rarr; copy the <code>figd_&hellip;</code> value and paste it in the box above, then <strong>Save token</strong>. Figma shows the token only once. &middot; <a href="https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens" target="_blank" rel="noopener" style="color:var(--lime,#b8ff3d);text-decoration:underline">Screenshot guide &#8599;</a></div></div>
         <div class="field"><label>FRAME LINK TO PULL</label><input id="figma-node" placeholder="https://www.figma.com/design/\u2026?node-id=2795-4417" value="${FIGMA_SOURCES[0].url}"></div>
         <div class="hero-actions" style="margin-top:10px"><button class="primary-button" data-action="figma-pull">\u21e9 Pull element into assets</button><button class="ghost-button" data-action="figma-save-token">Save token</button></div>
       </div></div>`;
+    }
+    // ---- frame browsing + multi-select pull (2026-10-28) -------------------
+    // The single "Pull element into assets" button renders exactly the frame whose
+    // link is pasted. This panel lets the user list a file's frames at depth 3,
+    // tick only the ones they want, and render just those through /v1/images.
+    let FIGMA_BROWSE=null; // {key,name,nodes:[{id,name,page}],picked:Set}
+    function figmaToken(){
+      const tEl=document.getElementById('figma-token');
+      const t=((tEl&&tEl.value)||state.settings.figmaToken||'').trim();
+      if(t&&t!==state.settings.figmaToken){state.settings.figmaToken=t;saveState();}
+      return t;
+    }
+    function figmaCollect(node,page,out,depth){
+      if(!node||depth>3)return;
+      const t=String(node.type||'');
+      if(depth>1&&/^(FRAME|COMPONENT|COMPONENT_SET|SECTION|GROUP)$/.test(t)&&node.name){
+        out.push({id:node.id,name:node.name,page:page});
+      }
+      (node.children||[]).forEach(c=>figmaCollect(c,page,out,depth+1));
+    }
+    async function figmaBrowse(fileKey,fileName){
+      const token=figmaToken();
+      if(!token){toast('Add your Figma personal access token first (Brand Assets \u2192 token box).');return;}
+      toast('Reading frames from Figma\u2026');
+      try{
+        const r=await fetch('https://api.figma.com/v1/files/'+fileKey+'?depth=3',{headers:{'X-Figma-Token':token}});
+        if(!r.ok)throw new Error('Figma API '+r.status+(r.status===403?' \u2014 token needs "File content: Read only" and access to this file':''));
+        const j=await r.json();
+        const out=[];
+        ((j.document&&j.document.children)||[]).forEach(pg=>figmaCollect(pg,pg.name,out,1));
+        const seen=new Set(),nodes=[];
+        out.forEach(n=>{if(!seen.has(n.id)){seen.add(n.id);nodes.push(n);}});
+        if(!nodes.length)throw new Error('No frames found \u2014 check the token has access to this file');
+        FIGMA_BROWSE={key:fileKey,name:fileName,nodes:nodes.slice(0,400),picked:new Set()};
+        render();
+        toast(nodes.length+' frame'+(nodes.length===1?'':'s')+' listed \u2014 tick the ones to pull.');
+      }catch(err){toast('Figma browse failed: '+(err&&err.message?err.message:err));}
+    }
+    function figmaBrowsePanel(){
+      const b=FIGMA_BROWSE;
+      if(!b)return '';
+      const picked=b.picked.size;
+      const item=n=>{const on=b.picked.has(n.id);return `<div class="figma-pick${on?' on':''}" data-action="figma-pick" data-id="${n.id}"><span class="figma-box">${on?'\u2713':''}</span><span class="figma-pick-name">${esc(n.name)}</span><span class="figma-pick-page">${esc(n.page||'')}</span></div>`;};
+      return `<div class="figma-browse"><div class="figma-browse-head"><strong>${esc(b.name)}</strong><span class="muted" id="figma-count">${b.nodes.length} frames \u00b7 ${picked} ticked</span><span style="margin-left:auto;display:flex;gap:8px"><button class="ghost-button small" data-action="figma-pick-all">Tick all</button><button class="ghost-button small" data-action="figma-pick-none">Clear</button><button class="ghost-button small" data-action="figma-browse-close">Close</button></span></div><div class="figma-browse-list">${b.nodes.map(item).join('')}</div><div class="hero-actions" style="margin-top:10px"><button class="primary-button" data-action="figma-pull-picked">\u21e9 Pull ${picked||'selected'} into assets</button></div></div>`;
+    }
+    function figmaSyncCount(){
+      const b=FIGMA_BROWSE;if(!b)return;
+      const c=document.getElementById('figma-count');
+      if(c)c.textContent=b.nodes.length+' frames \u00b7 '+b.picked.size+' ticked';
+      const btn=document.querySelector('[data-action="figma-pull-picked"]');
+      if(btn)btn.textContent='\u21e9 Pull '+(b.picked.size||'selected')+' into assets';
+    }
+    function figmaTogglePick(el){
+      const b=FIGMA_BROWSE;if(!b||!el)return;
+      const id=el.dataset.id;
+      const on=!b.picked.has(id);
+      if(on)b.picked.add(id);else b.picked.delete(id);
+      el.classList.toggle('on',on);
+      const box=el.querySelector('.figma-box');if(box)box.textContent=on?'\u2713':'';
+      figmaSyncCount();
+    }
+    function figmaPickAll(on){
+      const b=FIGMA_BROWSE;if(!b)return;
+      b.picked=new Set(on?b.nodes.map(n=>n.id):[]);
+      document.querySelectorAll('.figma-pick').forEach(el=>{
+        const sel=b.picked.has(el.dataset.id);
+        el.classList.toggle('on',sel);
+        const box=el.querySelector('.figma-box');if(box)box.textContent=sel?'\u2713':'';
+      });
+      figmaSyncCount();
+    }
+    async function figmaPullPicked(){
+      const b=FIGMA_BROWSE;
+      if(!b){toast('Browse a file first.');return;}
+      const ids=[...b.picked];
+      if(!ids.length){toast('Tick at least one frame first.');return;}
+      const token=figmaToken();
+      if(!token){toast('Add your Figma personal access token first.');return;}
+      toast('Pulling '+ids.length+' element'+(ids.length===1?'':'s')+'\u2026');
+      try{
+        const api='https://api.figma.com/v1/images/'+b.key+'?ids='+encodeURIComponent(ids.join(','))+'&format=png&scale=2';
+        const r=await fetch(api,{headers:{'X-Figma-Token':token}});
+        if(!r.ok)throw new Error('Figma API '+r.status);
+        const j=await r.json();
+        let ok=0,skip=0;
+        for(const id of ids){
+          const src=j.images&&j.images[id];
+          if(!src){skip++;continue;}
+          try{
+            const blob=await (await fetch(src)).blob();
+            const nm=id.replace(':','-');
+            const nmNode=(b.nodes.find(n=>n.id===id)||{}).name||('node '+nm);
+            const file=new File([blob],'figma_'+String(nmNode).replace(/[^\w\-]+/g,'_').slice(0,40)+'_'+nm+'.png',{type:'image/png'});
+            await handleFiles([file],'assets');
+            ok++;
+          }catch{skip++;}
+        }
+        b.picked=new Set();
+        saveState();render();
+        toast(ok+' element'+(ok===1?'':'s')+' pulled'+(skip?' \u00b7 '+skip+' skipped (empty or hidden frame)':''));
+      }catch(err){toast('Figma pull failed: '+(err&&err.message?err.message:err));}
     }
     async function figmaPull(){
       const tEl=document.getElementById('figma-token'), nEl=document.getElementById('figma-node');
@@ -1307,7 +1419,7 @@ ${blocks}
     function handleClick(e){const el=e.target.closest('[data-action],[data-nav]');if(!el){if(gameMenuOpen){gameMenuOpen=false;render();}return;}const a=el.dataset.action,nav=el.dataset.nav;if(nav){setView(nav);return;}if(a==='toggle-menu'){document.getElementById('sidebar').classList.toggle('open');return;}if(a==='new-content'){activeResultId=null;state.draft=structuredClone(DEFAULT_STATE.draft);setView('generate');return;}if(a==='choose-assets'){chooseFiles('assets');return;}if(a==='upload-logo'){chooseFiles('logo');return;}if(a==='upload-background'){chooseFiles('background');return;}if(a==='enhance-prompt'){enhancePrompt();return;}if(a==='download-article'){downloadArticle();return;}if(a==='copy-article'){copyArticle();return;}if(a==='choose-style-ref'){chooseFiles('styleref');return;}if(a==='clear-style-ref'){state.styleRef=null;saveState();render();toast(state.lang==='ZH'?'风格参考已移除。':'Style reference removed.');return;}if(a==='toggle-asset'){const x=state.assets.find(v=>v.id===el.dataset.id);if(x){x.selected=x.selected===false;saveState();render();toast(x.selected?(state.lang==='ZH'?'参考素材已选择。':'Reference asset selected.'):(state.lang==='ZH'?'参考素材已取消选择。':'Reference asset deselected.'));}return;}if(a==='toggle-game-menu'){gameMenuOpen=!gameMenuOpen;render();return;}
       if(a==='pick-game'){const _g=el.dataset.id||'';let _l=(Array.isArray(state.draft.subjects)&&state.draft.subjects.length)?state.draft.subjects.slice():subjectList(state.draft);_l=_l.includes(_g)?_l.filter(x=>x!==_g):_l.concat([_g]);if(!_l.length)_l=[subjectList(state.draft)[0]];state.draft.subjects=_l;state.draft.subject=_l[0];saveState();render();return;}
       if(a==='drop-game'){const _g=el.dataset.id||'';let _l=((Array.isArray(state.draft.subjects)&&state.draft.subjects.length)?state.draft.subjects.slice():subjectList(state.draft)).filter(x=>x!==_g);if(!_l.length)_l=[subjectList(state.draft)[0]];state.draft.subjects=_l;state.draft.subject=_l[0];saveState();render();return;}
-      if(a==='generate'){runGenerate();return;}if(a==='clear-draft'){resetDraft();return;}if(a==='regenerate'){runGenerate();return;}if(a==='revise'){reviseCurrent();return;}if(a==='generate-ai-image'){generateAIImage();return;}if(a==='approve-asset'){approveAsset();return;}if(a==='retry-calendar-sync'){syncApprovedContent(currentResult());return;}if(a==='reject-asset'){rejectAsset();return;}if(a==='download-ai-asset'){downloadAIAsset();return;}if(a==='select-image-version'){selectImageVersion(el.dataset.id);return;}if(a==='fix-compliance'){fixCompliance();return;}if(a==='download-pack'){downloadPack();return;}if(a==='export-poster'){exportPoster();return;}if(a==='schedule'){addCalendar();return;}if(a==='copy'){copyText(el.dataset.copy);return;}if(a==='open-content'){openContent(el.dataset.id);return;}if(a==='remove-asset'){state.assets=state.assets.filter(x=>x.id!==el.dataset.id);saveState();render();toast(state.lang==='ZH'?'素材已移除。':'Asset removed.');return;}if(a==='toggle-posted'){const x=state.calendar.find(v=>v.id===el.dataset.id);if(x){x.status=x.status==='Posted'?'Scheduled':'Posted';saveState();render();toast(x.status==='Posted'?(state.lang==='ZH'?'已标记为已发布。':'Marked as posted.'):(state.lang==='ZH'?'已移回排期。':'Moved back to scheduled.'));}return;}if(a==='delete-event'){if(confirm(state.lang==='ZH'?'删除这个日历项目？':'Delete this calendar item?')){state.calendar=state.calendar.filter(x=>x.id!==el.dataset.id);saveState();render();toast(state.lang==='ZH'?'日历项目已删除。':'Calendar item deleted.');}return;}if(a==='delete-content'){if(confirm(state.lang==='ZH'?'删除这个内容包？':'Delete this content package?')){state.contents=state.contents.filter(x=>x.id!==el.dataset.id);saveState();render();toast(state.lang==='ZH'?'内容已删除。':'Content deleted.');}return;}if(a==='use-template'){useTemplate(el.dataset.id);return;}if(a==='toggle-language'){changeLanguage(state.lang==='EN'?'ZH':'EN');return;}if(a==='copy-asset-error'){const c=currentResult();if(c&&c.assetError)copyText(c.assetError);return;}if(a==='clear-asset-error'){const c=currentResult();if(c){c.assetError=null;saveState();render();}return;}if(a==='use-gateway'){state.settings.provider='GameEngine';state.settings.imageModel='gpt-image-2';saveState();render();const _gk=document.getElementById('byok-key');if(!state.settings.apiKey&&_gk){_gk.focus();toast('Paste your Game Engine key in “Your own image key”, then press Save key — GPT Image 2 will run from this page.');}else{toast('Game Engine GPT Image 2 is now the image engine in this browser.');}return;}if(a==='save-byok'){saveSettings();return;}if(a==='clear-byok'){delete state.settings.apiKey;delete state.settings.provider;saveState();render();toast(state.lang==='ZH'?'已移除图片密钥。':'Image key removed.');return;}if(a==='save-settings'){saveSettings();return;}if(a==='test-provider'||a==='test-byok'){testProvider();return;}if(a==='clear-data'){if(confirm(state.lang==='ZH'?'清除所有本地内容、日历项目和素材？':'Clear all local content, calendar items and assets?')){const lang=state.lang;state=structuredClone(DEFAULT_STATE);state.lang=lang;activeResultId=null;clearPersistenceRecord();render();toast(state.lang==='ZH'?'本地数据已清除。':'Local data cleared.');}return;}if(a==='export-data'){download('ai-content-studio-data.json',JSON.stringify(state,null,2),'application/json');toast(state.lang==='ZH'?'数据已导出。':'Data export downloaded.');return;}if(a==='import-data'){const input=document.createElement('input');input.type='file';input.accept='application/json';input.onchange=()=>{const f=input.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result),base=structuredClone(DEFAULT_STATE);state={...base,...d,brand:{...base.brand,...(d.brand||{})},settings:{...base.settings,...(d.settings||{})},draft:{...base.draft,...(d.draft||{})}};saveState();render();toast(state.lang==='ZH'?'数据已导入。':'Data imported.');}catch{toast(state.lang==='ZH'?'JSON 文件无效。':'Invalid JSON file.');}};r.readAsText(f);};input.click();return;}if(a==='figma-goto'){setView('assets');return;}if(a==='figma-pull'){figmaPull();return;}if(a==='figma-save-token'){const t=document.getElementById('figma-token');if(t){state.settings.figmaToken=t.value.trim();saveState();toast('Figma token saved in this browser.');}return;}if(a==='download-library'){download('ai-content-studio-library.json',JSON.stringify(state.contents,null,2),'application/json');toast(state.lang==='ZH'?'内容库索引已导出。':'Library export downloaded.');}}
+      if(a==='generate'){runGenerate();return;}if(a==='clear-draft'){resetDraft();return;}if(a==='regenerate'){runGenerate();return;}if(a==='revise'){reviseCurrent();return;}if(a==='generate-ai-image'){generateAIImage();return;}if(a==='approve-asset'){approveAsset();return;}if(a==='retry-calendar-sync'){syncApprovedContent(currentResult());return;}if(a==='reject-asset'){rejectAsset();return;}if(a==='download-ai-asset'){downloadAIAsset();return;}if(a==='select-image-version'){selectImageVersion(el.dataset.id);return;}if(a==='fix-compliance'){fixCompliance();return;}if(a==='download-pack'){downloadPack();return;}if(a==='export-poster'){exportPoster();return;}if(a==='schedule'){addCalendar();return;}if(a==='copy'){copyText(el.dataset.copy);return;}if(a==='open-content'){openContent(el.dataset.id);return;}if(a==='remove-asset'){state.assets=state.assets.filter(x=>x.id!==el.dataset.id);saveState();render();toast(state.lang==='ZH'?'素材已移除。':'Asset removed.');return;}if(a==='toggle-posted'){const x=state.calendar.find(v=>v.id===el.dataset.id);if(x){x.status=x.status==='Posted'?'Scheduled':'Posted';saveState();render();toast(x.status==='Posted'?(state.lang==='ZH'?'已标记为已发布。':'Marked as posted.'):(state.lang==='ZH'?'已移回排期。':'Moved back to scheduled.'));}return;}if(a==='delete-event'){if(confirm(state.lang==='ZH'?'删除这个日历项目？':'Delete this calendar item?')){state.calendar=state.calendar.filter(x=>x.id!==el.dataset.id);saveState();render();toast(state.lang==='ZH'?'日历项目已删除。':'Calendar item deleted.');}return;}if(a==='delete-content'){if(confirm(state.lang==='ZH'?'删除这个内容包？':'Delete this content package?')){state.contents=state.contents.filter(x=>x.id!==el.dataset.id);saveState();render();toast(state.lang==='ZH'?'内容已删除。':'Content deleted.');}return;}if(a==='use-template'){useTemplate(el.dataset.id);return;}if(a==='toggle-language'){changeLanguage(state.lang==='EN'?'ZH':'EN');return;}if(a==='copy-asset-error'){const c=currentResult();if(c&&c.assetError)copyText(c.assetError);return;}if(a==='clear-asset-error'){const c=currentResult();if(c){c.assetError=null;saveState();render();}return;}if(a==='use-gateway'){state.settings.provider='GameEngine';state.settings.imageModel='gpt-image-2';saveState();render();const _gk=document.getElementById('byok-key');if(!state.settings.apiKey&&_gk){_gk.focus();toast('Paste your Game Engine key in “Your own image key”, then press Save key — GPT Image 2 will run from this page.');}else{toast('Game Engine GPT Image 2 is now the image engine in this browser.');}return;}if(a==='save-byok'){saveSettings();return;}if(a==='clear-byok'){delete state.settings.apiKey;delete state.settings.provider;saveState();render();toast(state.lang==='ZH'?'已移除图片密钥。':'Image key removed.');return;}if(a==='save-settings'){saveSettings();return;}if(a==='test-provider'||a==='test-byok'){testProvider();return;}if(a==='clear-data'){if(confirm(state.lang==='ZH'?'清除所有本地内容、日历项目和素材？':'Clear all local content, calendar items and assets?')){const lang=state.lang;state=structuredClone(DEFAULT_STATE);state.lang=lang;activeResultId=null;clearPersistenceRecord();render();toast(state.lang==='ZH'?'本地数据已清除。':'Local data cleared.');}return;}if(a==='export-data'){download('ai-content-studio-data.json',JSON.stringify(state,null,2),'application/json');toast(state.lang==='ZH'?'数据已导出。':'Data export downloaded.');return;}if(a==='import-data'){const input=document.createElement('input');input.type='file';input.accept='application/json';input.onchange=()=>{const f=input.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result),base=structuredClone(DEFAULT_STATE);state={...base,...d,brand:{...base.brand,...(d.brand||{})},settings:{...base.settings,...(d.settings||{})},draft:{...base.draft,...(d.draft||{})}};saveState();render();toast(state.lang==='ZH'?'数据已导入。':'Data imported.');}catch{toast(state.lang==='ZH'?'JSON 文件无效。':'Invalid JSON file.');}};r.readAsText(f);};input.click();return;}if(a==='figma-goto'){setView('assets');return;}if(a==='figma-pull'){figmaPull();return;}if(a==='figma-browse'){figmaBrowse(el.dataset.file,el.dataset.name);return;}if(a==='figma-pick'){figmaTogglePick(el);return;}if(a==='figma-pick-all'){figmaPickAll(true);return;}if(a==='figma-pick-none'){figmaPickAll(false);return;}if(a==='figma-browse-close'){FIGMA_BROWSE=null;render();return;}if(a==='figma-pull-picked'){figmaPullPicked();return;}if(a==='figma-save-token'){const t=document.getElementById('figma-token');if(t){state.settings.figmaToken=t.value.trim();saveState();toast('Figma token saved in this browser.');}return;}if(a==='download-library'){download('ai-content-studio-library.json',JSON.stringify(state.contents,null,2),'application/json');toast(state.lang==='ZH'?'内容库索引已导出。':'Library export downloaded.');}}
     function handleChange(e){const id=e.target.id;if(id==='asset-input'||id==='logo-input'||id==='background-input'){handleFiles(e.target.files,e.target.dataset.kind||'assets');e.target.value='';return;}if(id==='gen-language'){changeLanguage(e.target.value);return;}if(['gen-subject','gen-purpose','gen-tone','gen-brief','gen-image-prompt'].includes(id)){setDraftFromForm();saveState();return;}if(id==='setting-provider'){const p=e.target.value,tm=document.getElementById('setting-text-model'),im=document.getElementById('setting-model');if(p==='OpenAI'){if(tm&&!/^gpt|^o\d/i.test(tm.value))tm.value='gpt-4.1-mini';if(im&&!/^gpt-image/i.test(im.value))im.value='gpt-image-1';}if(p==='Gemini'){if(tm&&!/^gemini/i.test(tm.value))tm.value='gemini-2.5-flash';if(im&&!/^gemini/i.test(im.value))im.value='gemini-2.5-flash-image';}return;}if(['setting-key','setting-brand','setting-tagline','setting-text-model','setting-model','setting-quality'].includes(id))return;if(e.target.name==='subjectType'){const company=e.target.value==='company';state.draft.subjectType=e.target.value;state.draft.subject=company?'Company Event':'Banana Craze';state.draft.subjects=company?[]:['Banana Craze'];state.draft.purpose=company?'Company Event':'Product Spotlight';state.draft.imagePrompt='';saveState();render();return;}if(e.target.name==='format'){state.draft.format=e.target.value;saveState();return;}if(e.target.name==='platforms'){setDraftFromForm();saveState();}}
     function saveSettings(){state.settings.brandName=document.getElementById('setting-brand')?.value.trim()||'Game Engine';state.settings.tagline=document.getElementById('setting-tagline')?.value.trim()||'Game Everywhere';state.settings.provider=document.getElementById('setting-provider')?.value||'Local Smart Generator';state.settings.apiKey=document.getElementById('setting-key')?.value.trim()||'';state.settings.textModel=document.getElementById('setting-text-model')?.value.trim()||(state.settings.provider==='Gemini'?'gemini-2.5-flash':'gpt-4.1-mini');state.settings.imageModel=document.getElementById('setting-model')?.value.trim()||(state.settings.provider==='Gemini'?'gemini-2.5-flash-image':'gpt-image-1');state.settings.imageQuality=document.getElementById('setting-quality')?.value||'high';saveState();render();toast(state.lang==='ZH'?'设置已保存。':'Settings saved.');}
     async function testProvider(){const provider=document.getElementById('setting-provider')?.value||'Local Smart Generator',key=document.getElementById('setting-key')?.value.trim();if(provider==='Local Smart Generator'){toast(state.lang==='ZH'?'本地生成器已就绪，无需密钥。':'Local generator is ready—no key required.');return;}if(!key){toast(state.lang==='ZH'?'请先添加 API 密钥，或使用本地智能生成器。':'Add an API key first, or use Local Smart Generator.');return;}toast(state.lang==='ZH'?'正在测试连接…':'Testing connection…');try{const url=provider==='Gemini'?`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`:'https://api.openai.com/v1/models',r=await fetch(url,{headers:provider==='OpenAI'?{Authorization:`Bearer ${key}`}:{}}),data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error?.message||`HTTP ${r.status}`);toast(state.lang==='ZH'?`${provider} 连接成功。`:`${provider} connected successfully.`);}catch(e){toast(`${state.lang==='ZH'?'连接失败：':'Connection failed: '}${e.message}`);}}
